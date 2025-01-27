@@ -1,27 +1,44 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class PushNotification {
-  final FirebaseMessaging _fcm = FirebaseMessaging();
+  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
 
-  Future initialize() async {
-    _fcm.configure(
-//      this callback is used when the app runs on the foreground
-        onMessage: handleOnMessage,
-//        used when the app is closed completely and is launched using the notification
-        onLaunch: handleOnLaunch,
-//        when its on the background and opened using the notification drawer
-        onResume: handleOnResume);
+  Future<void> initialize() async {
+    // Request permission for iOS devices if needed
+    NotificationSettings settings = await _fcm.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('User granted permission');
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      print('User granted provisional permission');
+    } else {
+      print('User declined or has not accepted permission');
+    }
+
+    // Configure the behavior for handling messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("=== onMessage: ${message.data}");
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print("=== onMessageOpenedApp: ${message.data}");
+    });
   }
 
-  Future handleOnMessage(Map<String, dynamic> data) async {
-    print("=== data = ${data.toString()}");
+  Future<void> handleOnMessage(RemoteMessage message) async {
+    print("=== onMessage Data: ${message.data}");
   }
 
-  Future handleOnLaunch(Map<String, dynamic> data) async {
-    print("=== data = ${data.toString()}");
+  Future<void> handleOnLaunch(RemoteMessage message) async {
+    print("=== onLaunch Data: ${message.data}");
   }
 
-  Future handleOnResume(Map<String, dynamic> data) async {
-    print("=== data = ${data.toString()}");
+  Future<void> handleOnResume(RemoteMessage message) async {
+    print("=== onResume Data: ${message.data}");
   }
 }

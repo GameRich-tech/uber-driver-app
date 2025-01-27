@@ -11,16 +11,16 @@ class RiderModel {
   static const TOKEN = "token";
   static const PHOTO = "photo";
 
-  String _id;
-  String _name;
-  String _email;
-  String _phone;
-  String _token;
-  String _photo;
+  late final String _id;
+  late final String _name;
+  late final String _email;
+  late final String _phone;
+  late final String _token;
+  late final String _photo;
 
-  int _votes;
-  int _trips;
-  double _rating;
+  late final int _votes;
+  late final int _trips;
+  late final double _rating;
 
 //  getters
   String get name => _name;
@@ -34,14 +34,15 @@ class RiderModel {
   String get photo => _photo;
 
   RiderModel.fromSnapshot(DocumentSnapshot snapshot) {
-    _name = snapshot.data()[NAME];
-    _email = snapshot.data()[EMAIL];
-    _id = snapshot.data()[ID];
-    _phone = snapshot.data()[PHONE];
-    _token = snapshot.data()[TOKEN];
-    _votes = snapshot.data()[VOTES];
-    _trips = snapshot.data()[TRIPS];
-    _rating = snapshot.data()[RATING];
-    _photo = snapshot.data()[PHOTO];
+    final data = snapshot.data() as Map<String, dynamic>?;
+    _name = data?[NAME] ?? '';
+    _email = data?[EMAIL] ?? '';
+    _id = data?[ID] ?? '';
+    _phone = data?[PHONE] ?? '';
+    _token = data?[TOKEN] ?? '';
+    _votes = data?[VOTES] ?? '';
+    _trips = data?[TRIPS] ?? '';
+    _rating = data?[RATING] ?? '';
+    _photo = data?[PHOTO] ?? '';
   }
 }

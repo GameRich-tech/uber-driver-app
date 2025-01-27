@@ -1,10 +1,9 @@
 import 'package:cabdriver/locators/service_locator.dart';
 import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/services/call_sms.dart';
+import 'package:cabdriver/utils/app_constants.dart';
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
-
 
 import '../helpers/style.dart';
 import 'custom_text.dart';
@@ -22,7 +21,8 @@ class RiderWidget extends StatelessWidget {
         maxChildSize: 0.6,
         builder: (BuildContext context, myscrollController) {
           return Container(
-            decoration: BoxDecoration(color: white,
+            decoration: BoxDecoration(
+                color: white,
 //                        borderRadius: BorderRadius.only(
 //                            topLeft: Radius.circular(20),
 //                            topRight: Radius.circular(20)),
@@ -38,16 +38,21 @@ class RiderWidget extends StatelessWidget {
                 SizedBox(
                   height: 12,
                 ),
-
                 ListTile(
                   leading: Container(
-                    child:appState.riderModel?.phone  == null ? CircleAvatar(
-                      radius: 30,
-                      child: Icon(Icons.person_outline, size: 25,),
-                    ) : CircleAvatar(
-                      radius: 30,
-                      backgroundImage: NetworkImage(appState.riderModel?.photo),
-                    ),
+                    child: appState.riderModel?.phone == null
+                        ? CircleAvatar(
+                            radius: 30,
+                            child: Icon(
+                              Icons.person_outline,
+                              size: 25,
+                            ),
+                          )
+                        : CircleAvatar(
+                            radius: 30,
+                            backgroundImage:
+                                NetworkImage(appState.riderModel!.photo),
+                          ),
                   ),
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -65,7 +70,6 @@ class RiderWidget extends StatelessWidget {
                       ], style: TextStyle(color: black))),
                     ],
                   ),
-
                   trailing: Container(
                       decoration: BoxDecoration(
                           color: Colors.green.withOpacity(0.3),
@@ -84,6 +88,7 @@ class RiderWidget extends StatelessWidget {
                     text: "Ride details",
                     size: 18,
                     weight: FontWeight.bold,
+                    color: AppConstants.darkPrimary,
                   ),
                 ),
                 Row(
@@ -139,12 +144,13 @@ class RiderWidget extends StatelessWidget {
                 Divider(),
                 Padding(
                   padding: const EdgeInsets.all(12),
-                  child: RaisedButton(
+                  child: ElevatedButton(
                     onPressed: () {},
-                    color: red,
                     child: CustomText(
                       text: "Cancel Ride",
                       color: white,
+                      size: AppConstants.defaultTextSize,
+                      weight: AppConstants.defaultWeight,
                     ),
                   ),
                 )

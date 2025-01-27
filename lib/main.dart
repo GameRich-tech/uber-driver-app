@@ -1,15 +1,22 @@
+import 'dart:io';
+
 import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
 import 'package:cabdriver/screens/login.dart';
 import 'package:cabdriver/screens/splash.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'helpers/constants.dart';
+import 'package:provider/provider.dart';
+
 import 'locators/service_locator.dart';
 import 'screens/home.dart';
-import 'package:provider/provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    if (kReleaseMode) exit(1);
+  };
   setupLocator();
 
   return runApp(MultiProvider(
@@ -21,13 +28,15 @@ void main() {
     ],
     child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(primaryColor: Colors.deepOrange),
+        theme: ThemeData(primaryColor: Colors.white10),
         title: "Flutter Taxi",
         home: MyApp()),
   ));
 }
 
 class MyApp extends StatelessWidget {
+  get initialization => null;
+
   @override
   Widget build(BuildContext context) {
     UserProvider auth = Provider.of<UserProvider>(context);
@@ -55,7 +64,9 @@ class MyApp extends StatelessWidget {
             case Status.Authenticating:
               return LoginScreen();
             case Status.Authenticated:
-              return MyHomePage();
+              return MyHomePage(
+                title: 'Test',
+              );
             default:
               return LoginScreen();
           }

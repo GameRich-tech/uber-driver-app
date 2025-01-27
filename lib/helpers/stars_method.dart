@@ -1,6 +1,6 @@
 import 'package:cabdriver/widgets/stars.dart';
 
-stars({int votes, double rating}) {
+stars({required int votes, required double rating}) {
   if (votes == 0) {
     return StarsWidget(
       numberOfStars: 0,

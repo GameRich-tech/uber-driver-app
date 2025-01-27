@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:cabdriver/helpers/constants.dart';
 import 'package:cabdriver/helpers/style.dart';
@@ -10,13 +11,13 @@ import 'package:cabdriver/services/ride_request.dart';
 import 'package:cabdriver/services/rider.dart';
 import 'package:cabdriver/services/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-import 'dart:typed_data';
 
 enum Show { RIDER, TRIP }
 
@@ -29,9 +30,9 @@ class AppStateProvider with ChangeNotifier {
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
   GoogleMapsServices _googleMapsServices = GoogleMapsServices();
-  GoogleMapController _mapController;
-  Position position;
-  static LatLng _center;
+  late GoogleMapController _mapController;
+  late Position position;
+  static LatLng _center = LatLng(0, 0);
   LatLng _lastPosition = _center;
   TextEditingController _locationController = TextEditingController();
   TextEditingController destinationController = TextEditingController();
@@ -42,54 +43,71 @@ class AppStateProvider with ChangeNotifier {
   Set<Marker> get markers => _markers;
   Set<Polyline> get poly => _poly;
   GoogleMapController get mapController => _mapController;
-  RouteModel routeModel;
-  SharedPreferences prefs;
+  late RouteModel routeModel;
+  late SharedPreferences prefs;
 
-  Location location = new Location();
+  geocoding.Location location = new geocoding.Location(
+      latitude: 0, longitude: 0, timestamp: DateTime.timestamp());
   bool hasNewRideRequest = false;
   UserServices _userServices = UserServices();
-  RideRequestModel rideRequestModel;
-  RequestModelFirebase requestModelFirebase;
+  late RideRequestModel rideRequestModel;
+  late RequestModelFirebase requestModelFirebase;
 
-  RiderModel riderModel;
-  RiderServices _riderServices = RiderServices();
-  double distanceFromRider = 0;
-  double totalRideDistance = 0;
-  StreamSubscription<QuerySnapshot> requestStream;
-  int timeCounter = 0;
-  double percentage = 0;
-  Timer periodicTimer;
+  late RiderModel riderModel;
+  late RiderServices _riderServices = RiderServices();
+  late double distanceFromRider = 0;
+  late double totalRideDistance = 0;
+  late StreamSubscription<QuerySnapshot> requestStream;
+  late int timeCounter = 0;
+  late double percentage = 0;
+  late Timer periodicTimer;
   RideRequestServices _requestServices = RideRequestServices();
-  Show show;
+  late Show show;
 
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
   AppStateProvider() {
 //    _subscribeUser();
     _saveDeviceToken();
-    fcm.configure(
-//      this callback is used when the app runs on the foreground
-        onMessage: handleOnMessage,
-//        used when the app is closed completely and is launched using the notification
-        onLaunch: handleOnLaunch,
-//        when its on the background and opened using the notification drawer
-        onResume: handleOnResume);
+    // Foreground message handling
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      handleOnMessage(message as Map<String, dynamic>);
+    });
+
+    // App launched by tapping a notification
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      handleOnLaunch(message as Map<String, dynamic>);
+    });
+
+    // App is in the background, and notification taps open the app
+    messaging.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        handleOnResume(message as Map<String, dynamic>);
+      }
+    });
+
     _getUserLocation();
-    Geolocator().getPositionStream().listen(_userCurrentLocationUpdate);
+    Geolocator.getPositionStream().listen(_userCurrentLocationUpdate);
   }
 
   // ANCHOR LOCATION METHODS
   _userCurrentLocationUpdate(Position updatedPosition) async {
-    double distance = await Geolocator().distanceBetween(
-        prefs.getDouble('lat'),
-        prefs.getDouble('lng'),
-        updatedPosition.latitude,
-        updatedPosition.longitude);
+    // Provide fallback value for latitude and longitude
+    double latitude = prefs.getDouble('lat') ?? 0.0;
+    double longitude = prefs.getDouble('lng') ?? 0.0;
+
+    double distance = await Geolocator.distanceBetween(latitude, longitude,
+        updatedPosition.latitude, updatedPosition.longitude);
+
     Map<String, dynamic> values = {
       "id": prefs.getString("id"),
       "position": updatedPosition.toJson()
     };
+
     if (distance >= 50) {
-      if(show == Show.RIDER){
-        sendRequest(coordinates: requestModelFirebase.getCoordinates());
+      if (show == Show.RIDER) {
+        sendRequest(
+            coordinates: requestModelFirebase.getCoordinates(),
+            intendedLocation: '');
       }
       _userServices.updateUserData(values);
       await prefs.setDouble('lat', updatedPosition.latitude);
@@ -99,13 +117,13 @@ class AppStateProvider with ChangeNotifier {
 
   _getUserLocation() async {
     prefs = await SharedPreferences.getInstance();
-    position = await Geolocator().getCurrentPosition();
-    List<Placemark> placemark = await Geolocator()
+    position = await Geolocator.getCurrentPosition();
+    List<geocoding.Placemark> placemark = await geocoding
         .placemarkFromCoordinates(position.latitude, position.longitude);
     _center = LatLng(position.latitude, position.longitude);
     await prefs.setDouble('lat', position.latitude);
     await prefs.setDouble('lng', position.longitude);
-    _locationController.text = placemark[0].name;
+    _locationController.text = placemark[0].name!;
     notifyListeners();
   }
 
@@ -126,7 +144,8 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void sendRequest({String intendedLocation, LatLng coordinates}) async {
+  void sendRequest(
+      {required String intendedLocation, required LatLng coordinates}) async {
     LatLng origin = LatLng(position.latitude, position.longitude);
 
     LatLng destination = coordinates;
@@ -165,9 +184,9 @@ class AppStateProvider with ChangeNotifier {
     return result;
   }
 
-  List _decodePoly(String poly) {
+  List<double> _decodePoly(String poly) {
     var list = poly.codeUnits;
-    var lList = new List();
+    var lList = <double>[];
     int index = 0;
     int len = poly.length;
     int c = 0;
@@ -226,8 +245,8 @@ class AppStateProvider with ChangeNotifier {
   _saveDeviceToken() async {
     prefs = await SharedPreferences.getInstance();
     if (prefs.getString('token') == null) {
-      String deviceToken = await fcm.getToken();
-      await prefs.setString('token', deviceToken);
+      String? deviceToken = await fcm.getToken();
+      await prefs.setString('token', deviceToken!);
     }
   }
 
@@ -246,7 +265,7 @@ class AppStateProvider with ChangeNotifier {
 
   _handleNotificationData(Map<String, dynamic> data) async {
     hasNewRideRequest = true;
-    rideRequestModel = RideRequestModel.fromMap(data['data']);
+    rideRequestModel = RideRequestModel.fromSnapshot(data['data']);
     riderModel = await _riderServices.getRiderById(rideRequestModel.userId);
     notifyListeners();
   }
@@ -257,17 +276,20 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  listenToRequest({String id, BuildContext context}) async {
-//    requestModelFirebase = await _requestServices.getRequestById(id);
+  listenToRequest({required String id, required BuildContext context}) async {
+    // requestModelFirebase = await _requestServices.getRequestById(id);
     print("======= LISTENING =======");
     requestStream = _requestServices.requestStream().listen((querySnapshot) {
       querySnapshot.docChanges.forEach((doc) {
-        if (doc.doc.data()['id'] == id) {
+        var data = doc.doc.data() as Map<String, dynamic>?; // Cast to Map
+
+        if (data != null && data['id'] == id) {
           requestModelFirebase = RequestModelFirebase.fromSnapshot(doc.doc);
           notifyListeners();
-          switch (doc.doc.data()['status']) {
+
+          switch (data['status']) {
             case CANCELLED:
-              print("====== CANCELELD");
+              print("====== CANCELLED");
               break;
             case ACCEPTED:
               print("====== ACCEPTED");
@@ -276,7 +298,7 @@ class AppStateProvider with ChangeNotifier {
               print("====== EXPIRED");
               break;
             default:
-              print("==== PEDING");
+              print("==== PENDING");
               break;
           }
         }
@@ -285,7 +307,8 @@ class AppStateProvider with ChangeNotifier {
   }
 
   //  Timer counter for driver request
-  percentageCounter({String requestId, BuildContext context}) {
+  percentageCounter(
+      {required String requestId, required BuildContext context}) {
     notifyListeners();
     periodicTimer = Timer.periodic(Duration(seconds: 1), (time) {
       timeCounter = timeCounter + 1;
@@ -302,21 +325,21 @@ class AppStateProvider with ChangeNotifier {
     });
   }
 
-  acceptRequest({String requestId, String driverId}) {
+  acceptRequest({required String requestId, required String driverId}) {
     hasNewRideRequest = false;
     _requestServices.updateRequest(
         {"id": requestId, "status": "accepted", "driverId": driverId});
     notifyListeners();
   }
 
-  cancelRequest({String requestId}) {
+  cancelRequest({required String requestId}) {
     hasNewRideRequest = false;
     _requestServices.updateRequest({"id": requestId, "status": "cancelled"});
     notifyListeners();
   }
 
   //  ANCHOR UI METHODS
-  changeWidgetShowed({Show showWidget}) {
+  changeWidgetShowed({required Show showWidget}) {
     show = showWidget;
     notifyListeners();
   }

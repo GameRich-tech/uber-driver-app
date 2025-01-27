@@ -6,20 +6,20 @@ import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
 import 'package:cabdriver/screens/login.dart';
 import 'package:cabdriver/screens/ride_request.dart';
-import 'package:cabdriver/screens/splash.dart';
+import 'package:cabdriver/utils/app_constants.dart';
 import 'package:cabdriver/widgets/custom_text.dart';
 import 'package:cabdriver/widgets/loading.dart';
 import 'package:cabdriver/widgets/rider_draggable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_google_places_hoc081098/google_maps_webservice_places.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
-import "package:google_maps_webservice/places.dart";
 import 'package:shared_preferences/shared_preferences.dart';
 
 GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: GOOGLE_MAPS_API_KEY);
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  MyHomePage({super.key, required this.title});
   final String title;
 
   @override
@@ -48,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
   _updatePosition() async {
     //    this section down here will update the drivers current position on the DB when the app is opened
     SharedPreferences _prefs = await SharedPreferences.getInstance();
-    String _id = _prefs.getString("id");
+    String? _id = _prefs.getString("id");
     UserProvider _user = Provider.of<UserProvider>(context, listen: false);
     AppStateProvider _app =
         Provider.of<AppStateProvider>(context, listen: false);
@@ -65,18 +65,29 @@ class _MyHomePageState extends State<MyHomePage> {
           drawer: Drawer(
               child: ListView(
             children: [
+              // Widget for User Accounts Drawer Header
               UserAccountsDrawerHeader(
-                  accountName: CustomText(
-                    text: userProvider.userModel?.name ?? "",
-                    size: 18,
-                    weight: FontWeight.bold,
-                  ),
-                  accountEmail: CustomText(
-                    text: userProvider.userModel?.email ?? "",
-                  )),
+                accountName: CustomText(
+                  text: userProvider.userModel?.name ?? "",
+                  size: AppConstants.defaultTextSize,
+                  weight: AppConstants.defaultWeight,
+                  color: AppConstants.greenColor,
+                ),
+                accountEmail: CustomText(
+                  text: userProvider.userModel?.email ?? "",
+                  size: AppConstants.defaultTextSize,
+                  color: AppConstants.greenColor,
+                  weight: AppConstants
+                      .defaultWeight, // Assuming default size or set a specific one
+                ),
+              ),
               ListTile(
                 leading: Icon(Icons.exit_to_app),
-                title: CustomText(text: "Log out"),
+                title: CustomText(
+                    text: "Log out",
+                    size: AppConstants.defaultTextSize,
+                    color: AppConstants.greenColor,
+                    weight: AppConstants.defaultWeight),
                 onTap: () {
                   userProvider.signOut();
                   changeScreenReplacement(context, LoginScreen());
@@ -89,45 +100,51 @@ class _MyHomePageState extends State<MyHomePage> {
               MapScreen(scaffoldState),
               Positioned(
                   top: 60,
-                  left: MediaQuery.of(context).size.width / 6 ,
+                  left: MediaQuery.of(context).size.width / 6,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: white,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: grey,
-                            blurRadius: 17
-                          )
-                        ]
-                      ),
+                          color: white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [BoxShadow(color: grey, blurRadius: 17)]),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              child:userProvider.userModel?.phone  == null ? CircleAvatar(
-                                radius: 30,
-                                child: Icon(Icons.person_outline, size: 25,),
-                              ) : CircleAvatar(
-                                radius: 30,
-                                backgroundImage: NetworkImage(userProvider.userModel?.photo),
-                              ),
+                              child: userProvider.userModel?.phone == null
+                                  ? CircleAvatar(
+                                      radius: 30,
+                                      child: Icon(
+                                        Icons.person_outline,
+                                        size: 25,
+                                      ),
+                                    )
+                                  : CircleAvatar(
+                                      radius: 30,
+                                      backgroundImage: NetworkImage(
+                                          userProvider.userModel!.photo),
+                                    ),
                             ),
-                            SizedBox(width: 10,),
+                            SizedBox(
+                              width: 10,
+                            ),
                             Container(
                               height: 60,
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  CustomText(text: userProvider.userModel.name, size: 18, weight: FontWeight.bold,),
+                                  CustomText(
+                                    text: userProvider.userModel.name,
+                                    size: AppConstants.defaultTextSize,
+                                    color: AppConstants.greenColor,
+                                    weight: AppConstants.defaultWeight,
+                                  ),
                                   stars(
-                                    rating: userProvider.userModel.rating,
-                                    votes: userProvider.userModel.votes
-                                  )
+                                      rating: userProvider.userModel.rating,
+                                      votes: userProvider.userModel.votes)
                                 ],
                               ),
                             ),
@@ -138,8 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   )),
               //  ANCHOR Draggable DRIVER
               Visibility(
-                  visible: appState.show == Show.RIDER,
-                  child: RiderWidget()),
+                  visible: appState.show == Show.RIDER, child: RiderWidget()),
             ],
           )),
     );
@@ -165,7 +181,7 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  GoogleMapsPlaces googlePlaces;
+  late GoogleMapsPlaces googlePlaces;
   TextEditingController destinationController = TextEditingController();
   Color darkBlue = Colors.black;
   Color grey = Colors.grey;
@@ -207,7 +223,7 @@ class _MapScreenState extends State<MapScreen> {
                       size: 30,
                     ),
                     onPressed: () {
-                      scaffoldSate.currentState.openDrawer();
+                      scaffoldSate.currentState?.openDrawer();
                     }),
               ),
             ],

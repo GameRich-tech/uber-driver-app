@@ -1,20 +1,22 @@
 import 'dart:async';
+
 import 'package:cabdriver/helpers/constants.dart';
 import 'package:cabdriver/models/user.dart';
 import 'package:cabdriver/services/user.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum Status { Uninitialized, Authenticated, Authenticating, Unauthenticated }
 
 class UserProvider with ChangeNotifier {
-  User _user;
+  late User _user;
   Status _status = Status.Uninitialized;
   UserServices _userServices = UserServices();
-  UserModel _userModel;
+  late UserModel _userModel;
 
 //  getter
   UserModel get userModel => _userModel;
@@ -30,13 +32,7 @@ class UserProvider with ChangeNotifier {
   TextEditingController phone = TextEditingController();
 
   UserProvider.initialize() {
-    _fireSetUp();
-  }
-
-  _fireSetUp() async {
-    await initialization.then((value) {
-      auth.authStateChanges().listen(_onStateChanged);
-    });
+    _initialize();
   }
 
   Future<bool> signIn() async {
@@ -49,7 +45,7 @@ class UserProvider with ChangeNotifier {
           .signInWithEmailAndPassword(
               email: email.text.trim(), password: password.text.trim())
           .then((value) async {
-        await prefs.setString("id", value.user.uid);
+        await prefs.setString("id", value.user!.uid);
       });
       return true;
     } catch (e) {
@@ -69,10 +65,12 @@ class UserProvider with ChangeNotifier {
               email: email.text.trim(), password: password.text.trim())
           .then((result) async {
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        String _deviceToken = await fcm.getToken();
-        await prefs.setString("id", result.user.uid);
+        // Get device token as a string
+        String _deviceToken = await FirebaseMessaging.instance.getToken() ?? '';
+
+        await prefs.setString("id", result.user!.uid);
         _userServices.createUser(
-            id: result.user.uid,
+            id: result.user!.uid,
             name: name.text.trim(),
             email: email.text.trim(),
             phone: phone.text.trim(),
@@ -85,6 +83,30 @@ class UserProvider with ChangeNotifier {
       notifyListeners();
       print(e.toString());
       return false;
+    }
+  }
+
+  static const String LOGGED_IN = "loggedIn"; // Define constant for the key
+
+  /// Initialize user status and preferences
+  Future<void> _initialize() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isLoggedIn = prefs.getBool(LOGGED_IN) ?? false;
+
+    if (isLoggedIn) {
+      FirebaseAuth.instance.authStateChanges().listen((currentUser) async {
+        if (currentUser != null) {
+          _user = currentUser;
+          _userModel = await _userServices.getUserById(_user!.uid);
+          _status = Status.Authenticated;
+        } else {
+          _status = Status.Unauthenticated;
+        }
+        notifyListeners();
+      });
+    } else {
+      _status = Status.Unauthenticated;
+      notifyListeners();
     }
   }
 
@@ -112,7 +134,7 @@ class UserProvider with ChangeNotifier {
   }
 
   saveDeviceToken() async {
-    String deviceToken = await fcm.getToken();
+    String? deviceToken = await fcm.getToken();
     if (deviceToken != null) {
       _userServices.addDeviceToken(userId: user.uid, token: deviceToken);
     }

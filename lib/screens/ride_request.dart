@@ -2,13 +2,11 @@ import 'package:cabdriver/helpers/stars_method.dart';
 import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
+import 'package:cabdriver/utils/app_constants.dart';
 import 'package:cabdriver/widgets/custom_btn.dart';
 import 'package:cabdriver/widgets/custom_text.dart';
-import 'package:cabdriver/widgets/stars.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:provider/provider.dart';
 
 class RideRequestScreen extends StatefulWidget {
@@ -17,13 +15,14 @@ class RideRequestScreen extends StatefulWidget {
 }
 
 class _RideRequestScreenState extends State<RideRequestScreen> {
-
   @override
   void initState() {
     super.initState();
-    AppStateProvider _state = Provider.of<AppStateProvider>(context, listen: false);
+    AppStateProvider _state =
+        Provider.of<AppStateProvider>(context, listen: false);
     _state.listenToRequest(id: _state.rideRequestModel.id, context: context);
   }
+
   @override
   Widget build(BuildContext context) {
     AppStateProvider appState = Provider.of<AppStateProvider>(context);
@@ -39,6 +38,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
           text: "New Ride Request",
           size: 19,
           weight: FontWeight.bold,
+          color: AppConstants.darkPrimary,
         ),
       ),
       backgroundColor: white,
@@ -71,7 +71,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                         borderRadius: BorderRadius.circular(40)),
                     child: CircleAvatar(
                       radius: 45,
-                      backgroundImage: NetworkImage(appState.riderModel?.photo),
+                      backgroundImage: NetworkImage(appState.riderModel!.photo),
                     ),
                   ),
               ],
@@ -80,7 +80,12 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CustomText(text: appState.riderModel?.name ?? "Nada"),
+                CustomText(
+                  text: appState.riderModel?.name ?? "Nada",
+                  size: 20,
+                  color: AppConstants.darkPrimary,
+                  weight: AppConstants.defaultWeight,
+                ),
               ],
             ),
             SizedBox(height: 10),
@@ -95,10 +100,12 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                   CustomText(
                     text: "Destiation",
                     color: grey,
+                    size: 20,
+                    weight: AppConstants.defaultWeight,
                   ),
                 ],
               ),
-              subtitle: FlatButton.icon(
+              subtitle: ElevatedButton.icon(
                   onPressed: () async {
                     LatLng destinationCoordiates = LatLng(
                         appState.rideRequestModel.dLatitude,
@@ -133,17 +140,19 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                   label: CustomText(
                     text: appState.rideRequestModel?.destination ?? "Nada",
                     weight: FontWeight.bold,
+                    size: AppConstants.defaultTextSize,
+                    color: AppConstants.darkPrimary,
                   )),
             ),
             Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                FlatButton.icon(
+                ElevatedButton.icon(
                     onPressed: null,
                     icon: Icon(Icons.flag),
                     label: Text('User is near by')),
-                FlatButton.icon(
+                ElevatedButton.icon(
                     onPressed: null,
                     icon: Icon(Icons.attach_money),
                     label: Text(
@@ -176,7 +185,11 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         CustomText(
-                                            text: "Sorry! Request Expired")
+                                          text: "Sorry! Request Expired",
+                                          size: 20,
+                                          color: AppConstants.darkPrimary,
+                                          weight: AppConstants.defaultWeight,
+                                        )
                                       ],
                                     )),
                               ),
@@ -189,7 +202,10 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                           requestId: appState.rideRequestModel.id,
                           driverId: userProvider.userModel.id);
                       appState.changeWidgetShowed(showWidget: Show.RIDER);
-                      appState.sendRequest(coordinates: appState.requestModelFirebase.getCoordinates());
+                      appState.sendRequest(
+                          coordinates:
+                              appState.requestModelFirebase.getCoordinates(),
+                          intendedLocation: '');
 //                      showDialog(
 //                          context: context,
 //                          builder: (BuildContext context) {
@@ -278,6 +294,4 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
       ),
     ));
   }
-
-
 }
