@@ -1,34 +1,79 @@
-import 'package:Buco_Driver/screens/intro_pages/intro_page_1.dart';
-import 'package:Buco_Driver/screens/intro_pages/intro_page_2.dart';
-import 'package:Buco_Driver/screens/intro_pages/intro_page_3.dart';
+import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
+import 'package:Bucoride_Driver/screens/auth/login.dart';
+import 'package:Bucoride_Driver/screens/intro_pages/intro_page_1.dart';
+import 'package:Bucoride_Driver/screens/intro_pages/intro_page_2.dart';
+import 'package:Bucoride_Driver/screens/intro_pages/intro_page_3.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-class WelcomePage extends StatefulWidget {
-  const WelcomePage({super.key});
+class OnBoarding extends StatefulWidget {
+  const OnBoarding({super.key});
 
   @override
-  State<WelcomePage> createState() => _WelcomePageState();
+  State<OnBoarding> createState() => _OnBoardingState();
 }
 
-class _WelcomePageState extends State<WelcomePage> {
+class _OnBoardingState extends State<OnBoarding> {
   PageController _controller = PageController();
+
+  bool OnLastPage = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
           PageView(
+            controller: _controller,
+            onPageChanged: (index) {
+              setState(() {
+                OnLastPage = (index == 2);
+              });
+            },
             children: [
               IntroPage1(),
               IntroPage2(),
               IntroPage3(),
             ],
           ),
-          Container(
-            alignment: Alignment(0, 0.75),
-            child: SmoothPageIndicator(controller: _controller, count: 3),
-          )
+          Align(
+            alignment: Alignment(0, 0.9),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        _controller.jumpToPage(2);
+                      },
+                      child: Text("Skip"),
+                    ),
+                    SmoothPageIndicator(controller: _controller, count: 3),
+                    OnLastPage
+                        ? GestureDetector(
+                            onTap: () {
+                              changeScreenReplacement(context, LoginScreen());
+                            },
+                            child: Text("done"),
+                          )
+                        : GestureDetector(
+                            onTap: () {
+                              _controller.nextPage(
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeIn);
+                            },
+                            child: Text("next"),
+                          ),
+                  ],
+                ),
+                SizedBox(
+                    height:
+                        16), // Optional: add some space between buttons and bottom of the screen
+              ],
+            ),
+          ),
         ],
       ),
     );

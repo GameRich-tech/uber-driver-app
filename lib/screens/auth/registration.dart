@@ -3,15 +3,14 @@ import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:provider/provider.dart';
 
-import '../helpers/screen_navigation.dart';
-import '../helpers/style.dart';
-import '../providers/app_provider.dart';
-import '../providers/user.dart';
-import '../utils/app_constants.dart';
-import '../utils/images.dart';
-import '../widgets/loading.dart';
+import '../../helpers/screen_navigation.dart';
+import '../../helpers/style.dart';
+import '../../providers/user.dart';
+import '../../utils/app_constants.dart';
+import '../../utils/images.dart';
+import '../../widgets/loading.dart';
+import '../menu.dart';
 import 'login.dart';
-import 'menu.dart';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -20,12 +19,10 @@ class RegistrationScreen extends StatefulWidget {
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  
 
   @override
   Widget build(BuildContext context) {
     UserProvider authProvider = Provider.of<UserProvider>(context);
-    
 
     return Scaffold(
         key: _scaffoldKey,
@@ -176,52 +173,53 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           ),
                         ),
                         // Register Button
-                        if (authProvider.status == Status.Authenticating) Center(
-                                child: CircularProgressIndicator(
-                                  color: Theme.of(context).primaryColor,
-                                  strokeWidth: 2.0,
-                                ),
-                              ) else SizedBox(
-                                //constraints: BoxConstraints(maxWidth: 300),
-                                width: 400,
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    String resultMessage =
-                                        await authProvider.signUp();
-                                    if (resultMessage != "Success") {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(resultMessage),
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    authProvider.clearController();
-                                    // Clear text fields manually
-                                    authProvider.name.clear();
-                                    authProvider.email.clear();
-                                    authProvider.phone.clear();
-                                    authProvider.password.clear();
-                                    changeScreenReplacement(
-                                        context,
-                                        Menu(
-                                          key: _scaffoldKey,
-                                          title: '',
-                                        ));
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    shape: StadiumBorder(),
-                                    padding:
-                                        EdgeInsets.symmetric(vertical: 14.0),
-                                  ),
-                                  child: Text(
-                                    'Register'.tr,
-                                    style: TextStyle(fontSize: 18.0),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
+                        if (authProvider.status == Status.Authenticating)
+                          Center(
+                            child: CircularProgressIndicator(
+                              color: Theme.of(context).primaryColor,
+                              strokeWidth: 2.0,
+                            ),
+                          )
+                        else
+                          SizedBox(
+                            //constraints: BoxConstraints(maxWidth: 300),
+                            width: 400,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                String resultMessage =
+                                    await authProvider.signUp();
+                                if (resultMessage != "Success") {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(resultMessage),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                authProvider.clearController();
+                                // Clear text fields manually
+                                authProvider.name.clear();
+                                authProvider.email.clear();
+                                authProvider.phone.clear();
+                                authProvider.password.clear();
+                                changeScreenReplacement(
+                                    context,
+                                    Menu(
+                                      key: _scaffoldKey,
+                                      title: '',
+                                    ));
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: StadiumBorder(),
+                                padding: EdgeInsets.symmetric(vertical: 14.0),
                               ),
+                              child: Text(
+                                'Register'.tr,
+                                style: TextStyle(fontSize: 18.0),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
 
                         const SizedBox(height: 16.0),
                         Row(

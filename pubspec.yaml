@@ -1,4 +1,4 @@
-name: cabdriver
+name: Bucoride_Driver
 description: A new Flutter application.
 version: 1.0.0+1
 
@@ -11,23 +11,26 @@ dependencies:
 
   cloud_firestore: 5.6.2
   cupertino_icons: ^1.0.5
-  connectivity_plus: ^3.0.5
+  connectivity_plus: ^6.1.2
+  carousel_slider: ^5.0.0
+
   firebase_auth: 5.4.1
   firebase_core: ^3.2.0
   firebase_messaging: ^15.0.3
   firebase_crashlytics: ^4.0.3
   flutter_google_places_sdk: ^0.3.2+1
   flutter_spinkit: ^5.2.1
-  flutter_google_places_hoc081098: ^2.0.0
 
-  geolocator: ^12.0.0
+
+  geolocator: ^13.0.2
   geoflutterfire_plus: ^0.0.32
   google_maps_flutter: ^2.3.2
   googlemaps_flutter_webservices: ^1.0.2
-  geocoding: ^2.0.0
+  geocoding: ^3.0.0
   get: ^4.6.6
 
-
+  firebase_storage: ^12.4.1
+  image_picker: ^1.1.2
   modal_bottom_sheet: ^3.0.0
   percent_indicator: ^4.2.4
   provider: ^6.1.1
@@ -37,12 +40,20 @@ dependencies:
   url_launcher: ^6.1.10
   get_it: 8.0.3
   flutter_secure_storage: ^9.2.4
-
+  flutter_launcher_icons: ^0.14.3
+  intl_phone_field: ^3.2.0
+  smooth_page_indicator: ^1.0.0
+  lottie: ^3.3.1
+  curved_labeled_navigation_bar: ^2.0.5
+  flutter_speed_dial: ^7.0.0
+  http: ^1.0.0
+  flutter_local_notifications: ^18.0.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   change_app_package_name: ^1.4.0
+  flutter_launcher_icons: ^0.14.3 #flutter pub run flutter_launcher_icons:main
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec
@@ -61,6 +72,7 @@ flutter:
     - assets/language/
     - assets/svg/
     - assets/map/
+    - assets/lottie_files/
   #  - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.io/assets-and-images/#resolution-aware.

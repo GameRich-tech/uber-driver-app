@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AppConstants {
-  static const String appName = 'Flutter Taxi';
+  static const String appName = 'Bucoride Driver';
   static const String baseUrl = 'https://drivemond-admin.codemond.com';
   static const String appVersion = '1.0';
-  static const Color lightPrimary = Color(0xFFB8860B);
+  static const Color lightPrimary = Color(0xFFE8A80B);
   static const Color darkPrimary = Color(0xFF006064);
   static const String fontFamily = 'SFProText';
   static const double coverageRadiusInMeter = 50;
@@ -24,6 +24,7 @@ class AppConstants {
   static const String updateProfileInfo = '/api/customer/update/profile';
   static const String bannerUei =
       '/api/customer/banner/list?limit=100&offset=1';
+      
   static const String bannerCountUpdate =
       '/api/customer/banner/update-redirection-count';
   static const String vehicleMainCategory =

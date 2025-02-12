@@ -1,13 +1,19 @@
-import 'package:cabdriver/helpers/stars_method.dart';
-import 'package:cabdriver/helpers/style.dart';
-import 'package:cabdriver/providers/app_provider.dart';
-import 'package:cabdriver/providers/user.dart';
-import 'package:cabdriver/utils/app_constants.dart';
-import 'package:cabdriver/widgets/custom_btn.dart';
-import 'package:cabdriver/widgets/custom_text.dart';
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
+
+import '../helpers/constants.dart';
+import '../helpers/stars_method.dart';
+import '../helpers/style.dart';
+import '../models/ride_Request.dart';
+import '../providers/app_provider.dart';
+import '../providers/user.dart';
+import '../utils/app_constants.dart';
+import '../widgets/custom_btn.dart';
+import '../widgets/custom_text.dart';
 
 class RideRequestScreen extends StatefulWidget {
   @override
@@ -15,19 +21,48 @@ class RideRequestScreen extends StatefulWidget {
 }
 
 class _RideRequestScreenState extends State<RideRequestScreen> {
+  DocumentSnapshot? _document;
+  late StreamSubscription<QuerySnapshot> requestStreamSubscription;
+
   @override
   void initState() {
+    // TODO: implement initState
+
+    _loadPendingDocument();
     super.initState();
-    AppStateProvider _state =
+  }
+
+  Future<void> _loadPendingDocument() async {
+    AppStateProvider appState =
         Provider.of<AppStateProvider>(context, listen: false);
-    _state.listenToRequest(id: _state.rideRequestModel.id, context: context);
+    try {
+      QuerySnapshot querySnapshot = await firestore
+          .collection('requests')
+          .where('status', isEqualTo: 'pending')
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        setState(() {
+          final document = querySnapshot.docs.first;
+          appState.requestModelFirebase =
+              RequestModelFirebase.fromSnapshot(document);
+          print("User ID: ${appState.requestModelFirebase!.userId}");
+        });
+      } else {
+        print("No pending documents found.");
+      }
+    } catch (e) {
+      print("Error retrieving document: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    AppStateProvider appState = Provider.of<AppStateProvider>(context);
+    AppStateProvider appState =
+        Provider.of<AppStateProvider>(context, listen: true);
     UserProvider userProvider = Provider.of<UserProvider>(context);
-
+    _loadPendingDocument();
     return SafeArea(
         child: Scaffold(
       appBar: AppBar(
@@ -52,7 +87,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                 if (appState.riderModel.photo == null)
                   Container(
                     decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.5),
+                        color: Colors.grey,
                         borderRadius: BorderRadius.circular(40)),
                     child: CircleAvatar(
                       backgroundColor: Colors.transparent,
@@ -71,7 +106,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                         borderRadius: BorderRadius.circular(40)),
                     child: CircleAvatar(
                       radius: 45,
-                      backgroundImage: NetworkImage(appState.riderModel!.photo),
+                      backgroundImage: NetworkImage(appState.riderModel.photo),
                     ),
                   ),
               ],
@@ -81,7 +116,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CustomText(
-                  text: appState.riderModel?.name ?? "Nada",
+                  text: appState.riderModel.name,
                   size: 20,
                   color: AppConstants.darkPrimary,
                   weight: AppConstants.defaultWeight,
@@ -107,13 +142,13 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
               ),
               subtitle: ElevatedButton.icon(
                   onPressed: () async {
-                    LatLng destinationCoordiates = LatLng(
-                        appState.rideRequestModel.dLatitude,
-                        appState.rideRequestModel.dLongitude);
-                    appState.addLocationMarker(
-                        destinationCoordiates,
-                        appState.rideRequestModel?.destination ?? "Nada",
-                        "Destination Location");
+                    //LatLng destinationCoordiates = LatLng(
+                    //appState.rideRequestModel.dLatitude,
+                    //appState.rideRequestModel.dLongitude);
+                    //appState.addLocationMarker(
+                    //    destinationCoordiates,
+                    //   appState.rideRequestModel.destination ?? "Nada",
+                    //   "Destination Location");
                     showModalBottomSheet(
                         context: context,
                         builder: (BuildContext bc) {
@@ -121,14 +156,14 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                             height: 400,
                             child: GoogleMap(
                               initialCameraPosition: CameraPosition(
-                                  target: destinationCoordiates, zoom: 13),
-                              onMapCreated: appState.onCreate,
+                                  target: appState.center, zoom: 13),
+                              //onMapCreated: appState.onCreate,
                               myLocationEnabled: true,
                               mapType: MapType.normal,
                               tiltGesturesEnabled: true,
                               compassEnabled: false,
-                              markers: appState.markers,
-                              onCameraMove: appState.onCameraMove,
+                              //markers: appState.markers,
+                              //onCameraMove: appState.onCameraMove,
                               polylines: appState.poly,
                             ),
                           );
@@ -138,7 +173,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                     Icons.location_on,
                   ),
                   label: CustomText(
-                    text: appState.rideRequestModel?.destination ?? "Nada",
+                    text: "yt",
                     weight: FontWeight.bold,
                     size: AppConstants.defaultTextSize,
                     color: AppConstants.darkPrimary,
@@ -155,8 +190,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                 ElevatedButton.icon(
                     onPressed: null,
                     icon: Icon(Icons.attach_money),
-                    label: Text(
-                        "${appState.rideRequestModel.distance.value / 500} ")),
+                    label: Text("${7 / 500} ")),
               ],
             ),
             Divider(),
@@ -196,11 +230,8 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                             );
                           });
                     } else {
-                      appState.clearMarkers();
+                      //ppState.clearMarkers();
 
-                      appState.acceptRequest(
-                          requestId: appState.rideRequestModel.id,
-                          driverId: userProvider.userModel.id);
                       appState.changeWidgetShowed(showWidget: Show.RIDER);
                       appState.sendRequest(
                           coordinates:
@@ -281,7 +312,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                 CustomBtn(
                   text: "Reject",
                   onTap: () {
-                    appState.clearMarkers();
+                    //appState.clearMarkers();
                     appState.changeRideRequestStatus();
                   },
                   bgColor: red,

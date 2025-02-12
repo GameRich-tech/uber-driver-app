@@ -1,8 +1,10 @@
-import 'package:cabdriver/models/ride_request.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../models/ride_Request.dart';
 
 class RideRequestServices {
   final String collection = "requests";
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   void updateRequest(Map<String, dynamic> values) {
@@ -11,7 +13,7 @@ class RideRequestServices {
 
   Stream<QuerySnapshot> requestStream({String? id}) {
     CollectionReference reference = _firestore.collection(collection);
-    return reference.snapshots();
+    return reference.where('status', isEqualTo: 'pending').snapshots();
   }
 
   Future<RequestModelFirebase> getRequestById(String id) =>

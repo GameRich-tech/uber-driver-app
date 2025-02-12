@@ -1,4 +1,4 @@
-import 'package:cabdriver/widgets/stars.dart';
+import '../widgets/stars.dart';
 
 stars({required int votes, required double rating}) {
   if (votes == 0) {

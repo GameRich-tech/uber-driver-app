@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class RiderModel {
   static const ID = "id";
   static const NAME = "name";
@@ -22,7 +20,7 @@ class RiderModel {
   late final int _trips;
   late final double _rating;
 
-//  getters
+  // Getters
   String get name => _name;
   String get email => _email;
   String get id => _id;
@@ -33,16 +31,16 @@ class RiderModel {
   String get token => _token;
   String get photo => _photo;
 
-  RiderModel.fromSnapshot(DocumentSnapshot snapshot) {
-    final data = snapshot.data() as Map<String, dynamic>?;
-    _name = data?[NAME] ?? '';
-    _email = data?[EMAIL] ?? '';
-    _id = data?[ID] ?? '';
-    _phone = data?[PHONE] ?? '';
-    _token = data?[TOKEN] ?? '';
-    _votes = data?[VOTES] ?? '';
-    _trips = data?[TRIPS] ?? '';
-    _rating = data?[RATING] ?? '';
-    _photo = data?[PHOTO] ?? '';
+  // Constructor from Map
+  RiderModel.fromMap(Map<String, dynamic> data) {
+    _name = data[NAME] ?? '';
+    _email = data[EMAIL] ?? '';
+    _id = data[ID] ?? '';
+    _phone = data[PHONE] ?? '';
+    _token = data[TOKEN] ?? '';
+    _votes = data[VOTES] ?? 0;
+    _trips = data[TRIPS] ?? 0;
+    _rating = data[RATING] ?? 0.0;
+    _photo = data[PHOTO] ?? '';
   }
 }

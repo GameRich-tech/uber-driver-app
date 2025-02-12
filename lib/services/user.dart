@@ -1,5 +1,6 @@
-import 'package:cabdriver/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../models/user.dart';
 
 class UserServices {
   final String collection = "drivers";

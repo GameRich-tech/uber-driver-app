@@ -1,18 +1,33 @@
 import 'dart:io';
 
-import 'package:cabdriver/providers/app_provider.dart';
-import 'package:cabdriver/providers/user.dart';
-import 'package:cabdriver/screens/login.dart';
-import 'package:cabdriver/screens/splash.dart';
+import 'package:Bucoride_Driver/api/firebase_api.dart';
+import 'package:Bucoride_Driver/providers/app_provider.dart';
+import 'package:Bucoride_Driver/providers/location_provider.dart';
+import 'package:Bucoride_Driver/providers/ride_request_provider.dart';
+import 'package:Bucoride_Driver/providers/user.dart';
+import 'package:Bucoride_Driver/screens/splash.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'locators/service_locator.dart';
-import 'screens/home.dart';
 
-void main() {
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Handling background message: ${message.messageId}");
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+      //options: DefaultFirebaseOptions.currentPlatform,
+      );
+  await FirebaseApi().initNotifications();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     if (kReleaseMode) exit(1);
@@ -25,61 +40,25 @@ void main() {
         value: AppStateProvider(),
       ),
       ChangeNotifierProvider.value(value: UserProvider.initialize()),
+      ChangeNotifierProvider(
+        create: (_) => LocationProvider(), // Stream starts here
+        child: MyApp(),
+      ),
+      ChangeNotifierProvider(create: (_) => RideRequestProvider()),
     ],
     child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(primaryColor: Colors.white10),
-        title: "Flutter Taxi",
-        home: MyApp()),
+      debugShowCheckedModeBanner: false,
+    
+      theme: ThemeData.light(),
+
+      home: MyApp(),
+    ),
   ));
 }
 
 class MyApp extends StatelessWidget {
-  get initialization => null;
-
   @override
   Widget build(BuildContext context) {
-    UserProvider auth = Provider.of<UserProvider>(context);
-
-    return FutureBuilder(
-      // Initialize FlutterFire:
-      future: initialization,
-      builder: (context, snapshot) {
-        // Check for errors
-        if (snapshot.hasError) {
-          return Scaffold(
-            body: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [Text("Something went wrong")],
-            ),
-          );
-        }
-
-        // Once complete, show your application
-        if (snapshot.connectionState == ConnectionState.done) {
-          switch (auth.status) {
-            case Status.Uninitialized:
-              return Splash();
-            case Status.Unauthenticated:
-            case Status.Authenticating:
-              return LoginScreen();
-            case Status.Authenticated:
-              return MyHomePage(
-                title: 'Test',
-              );
-            default:
-              return LoginScreen();
-          }
-        }
-
-        // Otherwise, show something whilst waiting for initialization to complete
-        return Scaffold(
-          body: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [CircularProgressIndicator()],
-          ),
-        );
-      },
-    );
+    return Splash();
   }
 }

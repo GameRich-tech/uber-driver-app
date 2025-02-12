@@ -1,8 +1,11 @@
 import 'package:Bucoride_Driver/helpers/style.dart';
+import 'package:Bucoride_Driver/providers/user.dart';
 import 'package:Bucoride_Driver/utils/app_constants.dart';
 import 'package:Bucoride_Driver/utils/dimensions.dart';
 import 'package:Bucoride_Driver/utils/images.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:provider/provider.dart';
 
 class AddVehiclePage extends StatefulWidget {
   @override
@@ -13,11 +16,42 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController modelController = TextEditingController();
   final TextEditingController brandController = TextEditingController();
-  final TextEditingController weightCapacityController =
-      TextEditingController();
+  final TextEditingController weightCapacityController = TextEditingController();
   final TextEditingController licensePlateController = TextEditingController();
   final TextEditingController expiryDateController = TextEditingController();
   final TextEditingController fuelTypeController = TextEditingController();
+
+bool _isLoading = false;
+
+  Future<void> updateUserData(Map<String, dynamic> data) async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    UserProvider _user = Provider.of<UserProvider>(context, listen: false);
+    // Replace _userServices.updateUserData(data); with your actual function call.
+    print(data);
+     _user.updateUserData(data);
+
+     await _user.reloadUserModel();
+     setState(() {
+        _isLoading = false;
+     });
+     
+  }
+
+  Map<String, dynamic> gatherFormData() {
+    UserProvider _user = Provider.of<UserProvider>(context, listen: false);
+    return {
+      'id': _user.userModel?.id,
+      'model': modelController.text,
+      'brand': brandController.text,
+      'weightCapacity': weightCapacityController.text,
+      'licensePlate': licensePlateController.text,
+      'expiryDate': expiryDateController.text,
+      'fuelType': fuelTypeController.text,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,15 +107,18 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
               SizedBox(height: Dimensions.paddingSize),
               TextFormField(
                 controller: modelController,
+                autofocus: true,
                 decoration: InputDecoration(
-                    hintStyle: TextStyle(color: Colors.black),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    hintText: "Model",
-                    icon: Icon(
-                      Icons.car_crash_outlined,
-                      color: Colors.black,
-                    )),
+                  hintStyle: TextStyle(color: Colors.black),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(25.0))
+                  ),
+                  hintText: "Model",
+                  icon: Icon(
+                    Icons.car_crash_outlined,
+                    color: Colors.black,
+                  )
+                ),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
               SizedBox(height: Dimensions.paddingSize),
@@ -90,21 +127,26 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                   'Brand',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Colors.black, fontSize: Dimensions.fontSizeLarge),
+                    color: Colors.black, 
+                    fontSize: Dimensions.fontSizeLarge
+                  ),
                 ),
               ),
               SizedBox(height: Dimensions.paddingSize),
               TextFormField(
                 controller: brandController,
+                autofocus: true,
                 decoration: InputDecoration(
-                    hintStyle: TextStyle(color: Colors.black),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    hintText: "Brand",
-                    icon: Icon(
-                      Icons.car_crash_outlined,
-                      color: Colors.black,
-                    )),
+                  hintStyle: TextStyle(color: Colors.black),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(25.0))
+                  ),
+                  hintText: "Brand",
+                  icon: Icon(
+                    Icons.car_crash_outlined,
+                    color: Colors.black,
+                  )
+                ),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
               SizedBox(height: Dimensions.paddingSize),
@@ -113,21 +155,26 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                   'Weight Capacity',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Colors.black, fontSize: Dimensions.fontSizeLarge),
+                    color: Colors.black, 
+                    fontSize: Dimensions.fontSizeLarge
+                  ),
                 ),
               ),
               SizedBox(height: Dimensions.paddingSize),
               TextFormField(
                 controller: weightCapacityController,
+                autofocus: true,
                 decoration: InputDecoration(
-                    hintStyle: TextStyle(color: Colors.black),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    hintText: "Weight Capacity (KG)",
-                    icon: Icon(
-                      Icons.car_crash_outlined,
-                      color: Colors.black,
-                    )),
+                  hintStyle: TextStyle(color: Colors.black),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(25.0))
+                  ),
+                  hintText: "Weight Capacity (KG)",
+                  icon: Icon(
+                    Icons.car_crash_outlined,
+                    color: Colors.black,
+                  )
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
@@ -137,21 +184,26 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                   'License Plate Number',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Colors.black, fontSize: Dimensions.fontSizeLarge),
+                    color: Colors.black, 
+                    fontSize: Dimensions.fontSizeLarge
+                  ),
                 ),
               ),
               SizedBox(height: Dimensions.paddingSize),
               TextFormField(
                 controller: licensePlateController,
+                autofocus: true,
                 decoration: InputDecoration(
-                    hintStyle: TextStyle(color: Colors.black),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    hintText: "KCZ 2**",
-                    icon: Icon(
-                      Icons.car_crash_outlined,
-                      color: Colors.black,
-                    )),
+                  hintStyle: TextStyle(color: Colors.black),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(25.0))
+                  ),
+                  hintText: "KCZ 2**",
+                  icon: Icon(
+                    Icons.car_crash_outlined,
+                    color: Colors.black,
+                  )
+                ),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
               SizedBox(height: Dimensions.paddingSize),
@@ -160,28 +212,31 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                   'License Expiry',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Colors.black, fontSize: Dimensions.fontSizeLarge),
+                    color: Colors.black, 
+                    fontSize: Dimensions.fontSizeLarge
+                  ),
                 ),
               ),
               SizedBox(height: Dimensions.paddingSize),
               TextFormField(
                 controller: expiryDateController,
+                autofocus: true,
                 decoration: InputDecoration(
-                    hintStyle: TextStyle(color: Colors.black),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)),
-                    ),
-                    hintText: "yy-mm-dd",
-                    icon: Image.asset(
-                      Images.calenderIcon,
-                      color: black,
-                      width: Dimensions.iconSizeLarge,
-                      height: Dimensions.iconSizeLarge,
-                    )),
+                  hintStyle: TextStyle(color: Colors.black),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(25.0))
+                  ),
+                  hintText: "yy-mm-dd",
+                  icon: Image.asset(
+                    Images.calenderIcon,
+                    color: black,
+                    width: Dimensions.iconSizeLarge,
+                    height: Dimensions.iconSizeLarge,
+                  )
+                ),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
                 onTap: () async {
-                  FocusScope.of(context)
-                      .requestFocus(FocusNode()); // Hide keyboard
+                  FocusScope.of(context).requestFocus(FocusNode()); // Hide keyboard
                   DateTime? pickedDate = await showDatePicker(
                     context: context,
                     initialDate: DateTime.now(),
@@ -191,8 +246,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                   if (pickedDate != null) {
                     setState(() {
                       // Format the date and set it to the controller
-                      expiryDateController.text =
-                          "${pickedDate.toLocal()}".split(' ')[0];
+                      expiryDateController.text = "${pickedDate.toLocal()}".split(' ')[0];
                     });
                   }
                 },
@@ -203,35 +257,52 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                   'Fuel Type',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Colors.black, fontSize: Dimensions.fontSizeLarge),
+                    color: Colors.black, 
+                    fontSize: Dimensions.fontSizeLarge
+                  ),
                 ),
               ),
               SizedBox(height: Dimensions.paddingSize),
               TextFormField(
                 controller: fuelTypeController,
                 decoration: InputDecoration(
-                    hintStyle: TextStyle(color: Colors.black),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    hintText: "Select FuelType",
-                    icon: Icon(
-                      Icons.car_repair,
-                      color: Colors.black,
-                    )),
+                  hintStyle: TextStyle(color: Colors.black),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(25.0))
+                  ),
+                  hintText: "Select FuelType",
+                  icon: Icon(
+                    Icons.car_repair,
+                    color: Colors.black,
+                  )
+                ),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
               SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    // Submit vehicle details to Firebase here
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text('Vehicle submitted successfully!')),
-                    );
-                  }
-                },
-                child: Text('Submit'),
+              Center(
+                child: _isLoading ? SpinKitCubeGrid(color: black, size: 50,)
+                 : ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      // Consolidate form data
+                      Map<String, dynamic> formData = gatherFormData();
+                      
+                      // Submit vehicle details to Firebase here
+                      updateUserData(formData);
+                      
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Vehicle submitted successfully! Waiting Verification')
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConstants.lightPrimary,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  ),
+                  child: Text('Submit', style: TextStyle(fontSize: Dimensions.fontSizeDefault, color: Colors.black)),
+                ),
               ),
             ],
           ),

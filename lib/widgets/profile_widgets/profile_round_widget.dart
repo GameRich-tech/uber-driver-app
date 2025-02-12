@@ -1,63 +1,53 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ProfileWidget extends StatelessWidget {
-  final String? imagePath;
+  final String imagePath;
   final bool isEdit;
-  final bool isNetworkImage;
   final VoidCallback onClicked;
+  final bool isNetworkImage;
 
   const ProfileWidget({
     Key? key,
-    this.imagePath,
+    required this.imagePath,
     this.isEdit = false,
-    required this.isNetworkImage,
     required this.onClicked,
+    this.isNetworkImage = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
+    final image = isNetworkImage
+        ? NetworkImage(imagePath)
+        : FileImage(File(imagePath)) as ImageProvider;
 
     return Center(
       child: Stack(
         children: [
-          buildImageWithBorder(), // Updated to include border
-          Positioned(
-            bottom: 0,
-            right: 4,
-            child: buildEditIcon(color),
-          ),
+          buildYellowFrame(image),
+          if (isEdit)
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: buildEditIcon(context),
+            ),
         ],
       ),
     );
   }
 
-  Widget buildImageWithBorder() {
-    final ImageProvider imageProvider;
-
-    if (imagePath == null || imagePath!.isEmpty) {
-      // Default profile image if path is empty
-      imageProvider = AssetImage("assets/default_profile.png");
-    } else if (isNetworkImage) {
-      imageProvider = NetworkImage(imagePath!);
-    } else {
-      imageProvider = AssetImage(imagePath!);
-    }
-
+  Widget buildYellowFrame(ImageProvider image) {
     return Container(
-      padding: EdgeInsets.all(4), // Space for the border
+      padding: EdgeInsets.all(4), // Thickness of the yellow border
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.blue, // Change to desired border color
-          width: 3, // Border thickness
-        ),
+        border: Border.all(color: Colors.yellow, width: 4),
       ),
       child: ClipOval(
         child: Material(
           color: Colors.transparent,
           child: Ink.image(
-            image: imageProvider,
+            image: image,
             fit: BoxFit.cover,
             width: 128,
             height: 128,
@@ -68,30 +58,33 @@ class ProfileWidget extends StatelessWidget {
     );
   }
 
-  Widget buildEditIcon(Color color) => buildCircle(
-        color: Colors.white,
-        all: 3,
-        child: buildCircle(
-          color: color,
-          all: 8,
-          child: Icon(
-            isEdit ? Icons.add_a_photo : Icons.edit,
-            color: Colors.white,
-            size: 20,
-          ),
+  Widget buildEditIcon(BuildContext context) {
+    return buildCircle(
+      color: Colors.white,
+      all: 3,
+      child: buildCircle(
+        color: Theme.of(context).colorScheme.secondary,
+        all: 8,
+        child: Icon(
+          isEdit ? Icons.add_a_photo : Icons.edit,
+          color: Colors.white,
+          size: 20,
         ),
-      );
+      ),
+    );
+  }
 
   Widget buildCircle({
     required Widget child,
     required double all,
     required Color color,
-  }) =>
-      ClipOval(
-        child: Container(
-          padding: EdgeInsets.all(all),
-          color: color,
-          child: child,
-        ),
-      );
+  }) {
+    return ClipOval(
+      child: Container(
+        padding: EdgeInsets.all(all),
+        color: color,
+        child: child,
+      ),
+    );
+  }
 }

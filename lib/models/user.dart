@@ -40,6 +40,7 @@ class UserModel {
     _id = data?[ID] ?? '';
     _token = data?[TOKEN] ?? '';
 
+    _photo = data?[PHOTO] ?? '';
     _phone = data?[PHONE] ?? '';
     _votes = data?[VOTES] ?? 0; // Default to 0
     _trips = data?[TRIPS] ?? 0;

@@ -1,15 +1,15 @@
-import 'package:Bucoride_Driver/screens/registration.dart';
+import 'package:Bucoride_Driver/screens/auth/registration.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
-import '../helpers/screen_navigation.dart';
-import '../helpers/style.dart';
-import '../providers/user.dart';
-import '../utils/app_constants.dart';
-import '../utils/images.dart';
-import '../widgets/loading.dart';
-import 'menu.dart';
+import '../../helpers/screen_navigation.dart';
+import '../../helpers/style.dart';
+import '../../providers/user.dart';
+import '../../utils/app_constants.dart';
+import '../../utils/images.dart';
+import '../../widgets/loading.dart';
+import '../menu.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Column(children: [
-                        Image.asset(Images.logo, height: 75),
+                        Image.asset(Images.logoWithName, height: 75),
                         const SizedBox(
                           height: 8.0,
                         ),
@@ -190,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             )
                           : SizedBox(
                               //constraints: BoxConstraints(maxWidth: 300),
-                              width: 400,
+                              width: double.infinity,
                               child: ElevatedButton(
                                 onPressed: () async {
                                   String resultMessage =
@@ -237,7 +237,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16.0),
                       SizedBox(
-                        width: 400,
+                        width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
                             // TODO: Implement OTP-Screen

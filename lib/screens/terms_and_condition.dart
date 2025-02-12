@@ -1,4 +1,5 @@
 import 'package:Bucoride_Driver/utils/app_constants.dart';
+import 'package:Bucoride_Driver/widgets/app_bar/app_bar.dart';
 import 'package:flutter/material.dart';
 
 class TermsScreen extends StatelessWidget {
@@ -7,18 +8,9 @@ class TermsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text(
-          "Terms and Conditions",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: AppConstants.fontFamily,
-            fontSize: AppConstants.defaultTextSize,
-            fontWeight: AppConstants.defaultWeight,
-          ),
-        ),
-        backgroundColor: AppConstants.lightPrimary,
+      appBar: CustomAppBar(
+        title: "Terms and Conditions",
+         showNavBack: true, centerTitle: true,
       ),
       body: Container(
         color: Colors.white,
@@ -32,7 +24,7 @@ class TermsScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 10),
@@ -46,7 +38,7 @@ class TermsScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const Text(
@@ -59,7 +51,7 @@ class TermsScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const Text(
@@ -72,7 +64,7 @@ class TermsScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const Text(
@@ -85,7 +77,7 @@ class TermsScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const Text(
@@ -98,7 +90,7 @@ class TermsScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const Text(
@@ -107,7 +99,7 @@ class TermsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              /*Center(
+              Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppConstants.lightPrimary,
@@ -122,7 +114,7 @@ class TermsScreen extends StatelessWidget {
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),
-              ),*/
+              ),
             ],
           ),
         ),

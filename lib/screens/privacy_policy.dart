@@ -1,4 +1,5 @@
 import 'package:Bucoride_Driver/utils/app_constants.dart';
+import 'package:Bucoride_Driver/widgets/app_bar/app_bar.dart';
 import 'package:flutter/material.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
@@ -7,19 +8,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text(
-          "Privacy Policy",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: AppConstants.fontFamily,
-            fontSize: AppConstants.defaultTextSize,
-            fontWeight: AppConstants.defaultWeight,
-          ),
-        ),
-        backgroundColor: AppConstants.lightPrimary,
-      ),
+      appBar: CustomAppBar(title: "Privacy Policy", showNavBack: true, centerTitle: true),
       body: Container(
         color: Colors.white,
         padding: const EdgeInsets.all(16.0),
@@ -32,7 +21,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 10),
@@ -46,7 +35,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const Text(
@@ -59,7 +48,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const Text(
@@ -72,7 +61,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const Text(
@@ -85,7 +74,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const Text(
@@ -98,7 +87,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppConstants.darkPrimary,
+                  color: Colors.black,
                 ),
               ),
               const Text(
