@@ -29,12 +29,14 @@ class RequestModelFirebase {
   late final double _dLongitude;
   late final double _uLatitude;
   late final double _uLongitude;
+  late final double _distanceValue;
 
   String get id => _id;
   String get username => _username;
   String get userId => _userId;
   String get driverId => _driverId;
   String get status => _status;
+
   Map<String, dynamic> get position => _position;
   Map<String, dynamic> get destination => _destination;
   Map<String, dynamic> get distance => _distance;
@@ -42,6 +44,7 @@ class RequestModelFirebase {
   double get dLongitude => _dLongitude;
   double get uLatitude => _uLatitude;
   double get uLongitude => _uLongitude;
+  double get distanceValue => _distanceValue;
 
   RequestModelFirebase.fromSnapshot(DocumentSnapshot snapshot) {
     final data = snapshot.data() as Map<String, dynamic>?;
@@ -53,6 +56,11 @@ class RequestModelFirebase {
     _position = data?[POSITION] ?? {};
     _destination = data?[DESTINATION] ?? {};
     _distance = data?[DISTANCE] ?? {};
+    // Fix: Extract distance_value from the nested map
+    _distanceValue =
+        (data?[DISTANCE] != null && data?[DISTANCE]['value'] != null)
+            ? double.tryParse(data![DISTANCE]['value'].toString()) ?? 0.0
+            : 0.0;
     _dLatitude = double.parse(data?[DESTINATION_LAT]?.toString() ?? '0');
     _dLongitude = double.parse(data?[DESTINATION_LNG]?.toString() ?? '0');
     _uLatitude = double.parse(data?[USER_LAT]?.toString() ?? '0');

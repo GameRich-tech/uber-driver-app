@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 class RadarAnimation extends StatefulWidget {
   @override
@@ -30,25 +31,16 @@ class _RadarAnimationState extends State<RadarAnimation>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: RadarPainter(_controller.value),
-                child: Container(
-                  width: 200,
-                  height: 200,
-                ),
-              );
-            },
-          ),
-          Text(
-            'No fares\nat the moment',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+          Container(
+            child: Center(
+              child: // Lottie animation (replace with a real animation file)
+                  Lottie.asset(
+                'assets/animations/Animation - 1739866740839.json',
+                height: 250,
+                fit: BoxFit.contain,
+                animate: true,
+                repeat: true,
+              ),
             ),
           ),
         ],
@@ -65,7 +57,7 @@ class RadarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.yellowAccent.withOpacity(0.5)
+      ..color = Colors.yellowAccent.withAlpha(100)
       ..style = PaintingStyle.fill;
 
     double radius = size.width / 2;
@@ -73,13 +65,13 @@ class RadarPainter extends CustomPainter {
 
     canvas.drawCircle(size.center(Offset.zero), radius, paint);
 
-    paint.color = Colors.yellowAccent.withOpacity(0.3);
+    paint.color = Colors.yellowAccent.withAlpha(130);
     canvas.drawCircle(size.center(Offset.zero), radius * 0.75, paint);
 
-    paint.color = Colors.yellowAccent.withOpacity(0.2);
+    paint.color = Colors.yellowAccent.withAlpha(120);
     canvas.drawCircle(size.center(Offset.zero), radius * 0.5, paint);
 
-    paint.color = Colors.yellowAccent.withOpacity(0.1);
+    paint.color = Colors.yellowAccent.withAlpha(100);
     canvas.drawCircle(size.center(Offset.zero), radius * 0.25, paint);
 
     paint.color = Colors.yellowAccent;

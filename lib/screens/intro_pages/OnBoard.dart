@@ -1,10 +1,11 @@
-import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
-import 'package:Bucoride_Driver/screens/auth/login.dart';
-import 'package:Bucoride_Driver/screens/intro_pages/intro_page_1.dart';
-import 'package:Bucoride_Driver/screens/intro_pages/intro_page_2.dart';
-import 'package:Bucoride_Driver/screens/intro_pages/intro_page_3.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+import '../../helpers/screen_navigation.dart';
+import '../auth/login.dart';
+import 'intro_page_1.dart';
+import 'intro_page_2.dart';
+import 'intro_page_3.dart';
 
 class OnBoarding extends StatefulWidget {
   const OnBoarding({super.key});
@@ -53,24 +54,22 @@ class _OnBoardingState extends State<OnBoarding> {
                     SmoothPageIndicator(controller: _controller, count: 3),
                     OnLastPage
                         ? GestureDetector(
-                            onTap: () {
-                              changeScreenReplacement(context, LoginScreen());
-                            },
-                            child: Text("done"),
-                          )
+                      onTap: () {
+                        changeScreenReplacement(context, LoginScreen());
+                      },
+                      child: Text("done"),
+                    )
                         : GestureDetector(
-                            onTap: () {
-                              _controller.nextPage(
-                                  duration: Duration(milliseconds: 300),
-                                  curve: Curves.easeIn);
-                            },
-                            child: Text("next"),
-                          ),
+                      onTap: () {
+                        _controller.nextPage(
+                            duration: Duration(milliseconds: 300),
+                            curve: Curves.easeIn);
+                      },
+                      child: Text("next"),
+                    ),
                   ],
                 ),
-                SizedBox(
-                    height:
-                        16), // Optional: add some space between buttons and bottom of the screen
+                SizedBox(height: 16), // Optional: add some space between buttons and bottom of the screen
               ],
             ),
           ),

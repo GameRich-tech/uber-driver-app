@@ -9,9 +9,9 @@ class LoadingLocationScreen extends StatelessWidget {
       body: Center(
           child: Container(
               color: Colors.transparent,
-              child: SpinKitFadingCircle(
-                color: Colors.blueAccent,
-                size: 50,
+              child: SpinKitFoldingCube(
+                color: Colors.black45,
+                size: 10,
               ))),
     );
   }

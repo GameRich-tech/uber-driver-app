@@ -12,6 +12,9 @@ class UserServices {
       required String email,
       required String phone,
       required String token,
+      required String photo,
+      required bool hasVehicle,
+      required String identification,
       int votes = 0,
       int trips = 0,
       double rating = 0,
@@ -22,11 +25,12 @@ class UserServices {
       "phone": phone,
       "email": email,
       "votes": votes,
+      "photo": photo,
       "trips": trips,
       "rating": rating,
       "position": position,
-      "car": "Toyota Corolla",
-      "plate": "CBA 321 7",
+      "hasVehicle": hasVehicle,
+      "identification": identification,
       "token": token
     });
   }

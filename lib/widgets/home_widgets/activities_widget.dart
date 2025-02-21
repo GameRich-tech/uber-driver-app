@@ -95,7 +95,7 @@ class ActivityCard extends StatelessWidget {
       width: 190, // Adjust width as needed
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withAlpha(100),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color),
       ),

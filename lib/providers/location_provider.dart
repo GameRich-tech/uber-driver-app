@@ -1,16 +1,17 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:uuid/uuid.dart';
 
 import '../helpers/constants.dart';
-import '../utils/images.dart';
 
 class LocationProvider with ChangeNotifier {
+
+  static const String LOCATION_MARKER = "locationMarker";
   GoogleMapController? _mapController;
 
   // LIST OBJECTS
@@ -18,16 +19,25 @@ class LocationProvider with ChangeNotifier {
   Set<Polyline> _polylines = {};
 
   Position? _currentPosition;
+  Position? _destination;
   Stream<Position>? _positionStream;
   String _riderAddress = 'Loading...';
   late LatLng _bounds;
+  bool _isTracking = false;
+  String? _tripId = "";
+  String _eta = "";
+  String _remainingDistance = "";
+
   //Getters
   Position? get currentPosition => _currentPosition;
   GoogleMapController? get mapController => _mapController;
   Set<Marker> get markers => _markers; // Expose markers
   String get riderAddress => _riderAddress;
   Set<Polyline> get polylines => _polylines;
-//LatLng get bounds => _bounds;
+  String get eta => _eta;
+  String get remainingDistance => _remainingDistance;
+
+
 
 //SETTERS
 
@@ -37,13 +47,25 @@ class LocationProvider with ChangeNotifier {
   get isTrafficEnabled => _isTrafficEnabled;
 
 //OTHERS
-  BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarker;
+  BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarkerWithHue(
+    BitmapDescriptor.hueYellow,
+  );
 
   LocationProvider() {
     _startPositionStream();
     fetchLocation();
     checkPermisions();
   }
+  void startTrip(String tripId) {
+    _tripId = tripId;
+    _isTracking = true;
+    notifyListeners();
+  }
+
+  void stopTrip() {
+    _isTracking = false;
+  }
+
   void checkPermisions() async {
     LocationPermission permission = await Geolocator.requestPermission();
     checkLocationPermission(permission);
@@ -58,7 +80,7 @@ class LocationProvider with ChangeNotifier {
 
   Future<void> fetchLocation() async {
     print("Trying to fetch location");
-    _currentPosition = await Geolocator.getCurrentPosition();
+
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -99,8 +121,55 @@ class LocationProvider with ChangeNotifier {
       //_addCustomMarker(pos);
       _addCurrentLocationMarker(position);
 
+      // Update Firestore ONLY if tracking is active
+      if (_isTracking && _tripId != null) {
+        FirebaseFirestore.instance.collection('rides').doc(_tripId).update({
+          'driverLocation': {
+            'lat': position.latitude,
+            'lng': position.longitude,
+          }
+        });
+
+        updateTripInfo();
+      }
+
       notifyListeners();
     });
+  }
+
+  //Trip Info
+  Future<void> updateTripInfo() async {
+    if (_currentPosition == null || _destination == null) return;
+
+    createJourneyPolyline(
+        LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+        LatLng(_destination!.latitude, _destination!.longitude));
+    final response = await http.get(Uri.parse(
+        "https://maps.googleapis.com/maps/api/directions/json?origin=${_currentPosition?.latitude},${_currentPosition?.longitude}&destination=${_destination?.latitude},${_destination?.longitude}&key=${GOOGLE_MAPS_API_KEY}"));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final elements = data["routes"][0]["legs"][0];
+
+      _eta = elements["duration"]["text"]; // Example: "10 mins"
+      _remainingDistance = elements["distance"]["text"]; // Example: "3.5 km"
+
+      notifyListeners();
+    }
+  }
+
+  void startTracking(String tripId) {
+    _tripId = tripId;
+    _isTracking = true;
+
+    if (_positionStream == null) {
+      _startPositionStream();
+    }
+  }
+
+  void stopTracking() {
+    _isTracking = false;
+    _tripId = null;
   }
 
   onCreate(GoogleMapController controller) {
@@ -113,32 +182,35 @@ class LocationProvider with ChangeNotifier {
     notifyListeners(); // Update UI
   }
 
-  _addCustomMarker(LatLng position) {
-    BitmapDescriptor.asset(
-            ImageConfiguration(size: Size(30, 30), devicePixelRatio: 2.5),
-            Images.mapLocationIcon)
-        .then((icon) {
-      markerIcon = icon;
-    });
-    var uuid = new Uuid();
-    String markerId = uuid.v1();
-    _markers.add(Marker(
-        markerId: MarkerId(markerId), position: position, icon: markerIcon));
-  }
-
   clearMarkers() {
     _markers.clear();
     notifyListeners();
+  }
+
+  void animateToDriverPosition(LatLng driverPosition) {
+    LatLng pos =
+        LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
+    mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(driverPosition, 16.5), // Zoom into driver
+    );
+  }
+
+  void animateBackToDriverPosition() {
+    LatLng pos =
+        LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
+    mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(pos, 16.5), // Zoom into driver
+    );
   }
 
   // ✅ Add Marker for Current Location
   void _addCurrentLocationMarker(Position position) {
     clearMarkers();
     final marker = Marker(
-      markerId: MarkerId('current_location'),
+      markerId: MarkerId(LOCATION_MARKER),
       position: LatLng(position.latitude, position.longitude),
       infoWindow: InfoWindow(title: 'You Are Here'),
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow),
+      icon: markerIcon,
     );
 
     _markers
@@ -187,6 +259,20 @@ class LocationProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Position convertLatLngToPosition(LatLng latLng) {
+    return Position(
+      latitude: latLng.latitude,
+      longitude: latLng.longitude,
+      timestamp: DateTime.now(),
+      accuracy: 0.0, // Default value
+      altitude: 0.0, // Default value
+      heading: 0.0, // Default value
+      speed: 0.0, // Default value
+      speedAccuracy: 0.0, altitudeAccuracy: 0.0,
+      headingAccuracy: 0.0, // Default value
+    );
+  }
+
   // HERE WE CREATE THE POLY LINES
 // Create polyline based on rider's and driver's positions
   Future<void> createJourneyPolyline(
@@ -202,6 +288,8 @@ class LocationProvider with ChangeNotifier {
               polylineCoordinates // You can extend this with more points if needed
           );
       _polylines.add(polyline);
+
+      _destination = convertLatLngToPosition(destination);
       notifyListeners();
     }
   }

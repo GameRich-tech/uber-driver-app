@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
 import 'package:Bucoride_Driver/screens/intro_pages/OnBoard.dart';
-import 'package:Bucoride_Driver/utils/dimensions.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,8 +10,8 @@ import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/user.dart';
 import '../utils/app_constants.dart';
+import '../utils/dimensions.dart';
 import '../utils/images.dart';
-import '../widgets/loading.dart';
 import 'auth/login.dart';
 import 'menu.dart';
 
@@ -36,7 +35,6 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     if (!GetPlatform.isIOS) {
@@ -102,14 +100,11 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
     AppStateProvider appState =
         Provider.of<AppStateProvider>(context, listen: false);
 
-    await Future.delayed(Duration(seconds: 5)); // add delay for splash
+    await Future.delayed(Duration(seconds: 7)); // add delay for splash
 
     if (auth.status == Status.Authenticated) {
       // Navigate to Home if authenticated
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => Menu(title: AppConstants.appName)),
-        (Route<dynamic> route) => false,
-      );
+      changeScreenReplacement(context, Menu());
     } else {
       // Navigate to Login if not authenticated
       firstLaunch = await appState.checkIfFirstLaunch();
@@ -117,8 +112,7 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
       if (firstLaunch) {
         changeScreenReplacement(context, OnBoarding());
       } else {
-        Navigator.of(context)
-            .pushReplacement(MaterialPageRoute(builder: (_) => LoginScreen()));
+        changeScreenReplacement(context, LoginScreen());
       }
     }
   }
@@ -152,17 +146,10 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
                                   ((120 *
                                       double.tryParse(
                                           _animation.value.toString())!))),
-                          child: Text(
-                            "BucoRide",
-                            style: TextStyle(
-                                fontSize: Dimensions.fontSizeDefault,
-                                fontFamily: AppConstants.fontFamily,
-                                color: AppConstants.darkPrimary),
-                          ),
+                          child: Image.asset(Images.logoWithName, width: 160),
                         ),
                       ),
-                      Loading(), // add loading widget here
-                      const SizedBox(height: 50),
+                      const SizedBox(height: Dimensions.paddingSizeExtraLarge),
                       Image.asset(Images.splashBackgroundOne,
                           width: MediaQuery.of(context).size.width,
                           height: MediaQuery.of(context).size.height / 2,

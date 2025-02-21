@@ -15,16 +15,16 @@ import '../../services/call_sms.dart';
 import '../../utils/app_constants.dart';
 import '../../widgets/custom_text.dart';
 
-class ViewTrip extends StatefulWidget {
+class ShowTrip extends StatefulWidget {
   final Map<String, dynamic> request;
 
-  ViewTrip({required this.request});
+  ShowTrip({required this.request});
 
   @override
   _ViewTripState createState() => _ViewTripState();
 }
 
-class _ViewTripState extends State<ViewTrip> {
+class _ViewTripState extends State<ShowTrip> {
   final CallsAndMessagesService _service = locator<CallsAndMessagesService>();
   late LatLng riderPosition;
   String riderAddress = 'Loading...';
@@ -40,10 +40,24 @@ class _ViewTripState extends State<ViewTrip> {
 
     Provider.of<LocationProvider>(context, listen: false).fetchLocation();
     print(widget.request);
-
+    fetchRiderDetails();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setRiderAddress();
     });
+  }
+
+  fetchRiderDetails() {
+    //{username: John Doe,
+    // destination: Soy Club & Resorts, Eldoret-Kitale Road,
+    // Eldoret, Kenya, distance_text: 173 km,
+    // distance_value: 173419,
+    // destination_latitude: 0.6701188999999999,
+    // destination_longitude: 35.1588356,
+    // user_latitude: 0.0605847,
+    // user_longitude: 34.2934637,
+    // id: 72710720-eacd-11ef-aa9b-2db953babc58,
+    // userId: zGFDFs4EndP9H1yXNUt6VOvtoxh1
+    // }
   }
 
   setRiderAddress() async {

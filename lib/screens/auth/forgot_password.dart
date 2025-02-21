@@ -1,5 +1,3 @@
-import 'package:Bucoride_Driver/screens/auth/phone_login.dart';
-import 'package:Bucoride_Driver/screens/auth/registration.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -10,15 +8,16 @@ import '../../utils/app_constants.dart';
 import '../../utils/dimensions.dart';
 import '../../utils/images.dart';
 import '../../widgets/loading.dart';
-import '../menu.dart';
-import 'forgot_password.dart';
+import 'login.dart';
 
-class LoginScreen extends StatefulWidget {
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
+
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     with SingleTickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _loginScaffoldKey = GlobalKey<ScaffoldState>();
   final phoneController = TextEditingController();
@@ -69,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen>
                       child: SingleChildScrollView(
                         child: Padding(
                           padding:
-                              const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+                              const EdgeInsets.all(Dimensions.paddingSizeSmall),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -97,88 +96,16 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               SizedBox(
                                   height: MediaQuery.of(context).size.height *
-                                      0.01),
-                              _buildTextField(authProvider.email, 'Email',
+                                      0.06),
+                              _buildTextField(authProvider.email, "Email",
                                   Icons.email, false),
-                              _buildTextField(authProvider.password, 'Password',
-                                  Icons.lock, true),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: InkWell(
-                                      onTap: () => authProvider
-                                          .toggleRememberMe(), // Makes entire row clickable
-                                      child: Row(
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () =>
-                                                authProvider.toggleRememberMe(),
-                                            child: Container(
-                                              width: Dimensions.iconSizeMedium,
-                                              height: Dimensions.iconSizeMedium,
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                    color: Colors.blueAccent,
-                                                    width: 1),
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                                color: authProvider
-                                                        .isActiveRememberMe
-                                                    ? Colors.blueAccent
-                                                    : Colors.transparent,
-                                              ),
-                                              child: authProvider
-                                                      .isActiveRememberMe
-                                                  ? Icon(Icons.check,
-                                                      color: Colors.white,
-                                                      size:
-                                                          18) // Blue tick when checked
-                                                  : null,
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                              width:
-                                                  Dimensions.paddingSizeSmall),
-                                          GestureDetector(
-                                            onTap: () =>
-                                                authProvider.toggleRememberMe(),
-                                            child: Text(
-                                              'remember me'.tr,
-                                              style: TextStyle(
-                                                  fontSize: Dimensions
-                                                      .fontSizeDefault),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      changeScreen(
-                                          context, ForgotPasswordScreen());
-                                    },
-                                    child: Text(
-                                      'forgot password'.tr,
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: Dimensions.fontSizeDefault,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
                               const SizedBox(height: 16.0),
                               _buildLoginButton(authProvider),
                               const SizedBox(height: 16.0),
                               _buildDivider(),
                               const SizedBox(height: 16.0),
-                              _buildOtpLoginButton(),
+                              _buildEmailLoginButton(),
                               const SizedBox(height: 16.0),
-                              _buildRegisterLink(context),
                             ],
                           ),
                         ),
@@ -222,15 +149,21 @@ class _LoginScreenState extends State<LoginScreen>
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
-          String resultMessage = await authProvider.signIn();
-          if (resultMessage != "Success") {
+          String message = await authProvider.ResetPassword();
+
+          if (message == "Success") {
+            showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    content: Text("Password reset link sent. Check Your Email"),
+                  );
+                });
+          } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(resultMessage)),
+              SnackBar(content: Text("${message}")),
             );
-            return;
           }
-          authProvider.clearController();
-          changeScreenReplacement(context, Menu());
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blueAccent,
@@ -238,11 +171,12 @@ class _LoginScreenState extends State<LoginScreen>
           padding: EdgeInsets.symmetric(vertical: 14.0),
         ),
         child: Text(
-          'Log in'.tr,
+          'Reset Password'.tr,
           style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: Dimensions.fontSizeLarge),
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: Dimensions.fontSizeLarge,
+          ),
         ),
       ),
     );
@@ -261,12 +195,12 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildOtpLoginButton() {
+  Widget _buildEmailLoginButton() {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
         onPressed: () {
-          changeScreen(context, PhoneLoginScreen());
+          changeScreen(context, LoginScreen());
         },
         style: OutlinedButton.styleFrom(
           shape: StadiumBorder(),
@@ -274,30 +208,11 @@ class _LoginScreenState extends State<LoginScreen>
           padding: EdgeInsets.symmetric(vertical: 14.0),
         ),
         child: Text(
-          'OTP Login'.tr,
+          'back to Login'.tr,
           style: TextStyle(
               fontWeight: FontWeight.bold, fontSize: Dimensions.fontSizeLarge),
         ),
       ),
-    );
-  }
-
-  Widget _buildRegisterLink(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text('${'Create an account'.tr} '),
-        TextButton(
-          onPressed: () => changeScreen(context, RegistrationScreen()),
-          child: Text(
-            'Register here',
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline,
-                color: Colors.blue),
-          ),
-        ),
-      ],
     );
   }
 }

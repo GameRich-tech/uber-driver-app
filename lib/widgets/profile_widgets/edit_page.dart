@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
+import 'package:Bucoride_Driver/screens/menu.dart';
 import 'package:Bucoride_Driver/utils/app_constants.dart';
-import 'package:Bucoride_Driver/widgets/profile_widgets/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -92,7 +92,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   displayName: _nameController.text,
                   photoFile: _image,
                 );
-                changeScreenReplacement(context, ProfileScreen());
+                changeScreenReplacement(context, Menu());
               },
               child: Text('Save'),
             ),

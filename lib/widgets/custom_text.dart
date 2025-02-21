@@ -1,3 +1,4 @@
+import 'package:Bucoride_Driver/utils/dimensions.dart';
 import 'package:flutter/material.dart';
 
 import '../helpers/style.dart';
@@ -21,7 +22,7 @@ class CustomText extends StatelessWidget {
     return Text(
       text,
       style: TextStyle(
-          fontSize: size ?? 16,
+          fontSize: size ?? Dimensions.fontSizeDefault,
           color: color ?? black,
           fontWeight: weight ?? FontWeight.normal),
     );

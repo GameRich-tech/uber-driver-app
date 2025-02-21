@@ -1,5 +1,6 @@
 import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
 import 'package:Bucoride_Driver/screens/home.dart';
+import 'package:Bucoride_Driver/widgets/app_bar/app_bar.dart';
 import 'package:Bucoride_Driver/widgets/loading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -12,14 +13,14 @@ import '../../utils/app_constants.dart';
 import '../../utils/dimensions.dart';
 import '../../utils/images.dart';
 
-class TripScreen extends StatefulWidget {
-  const TripScreen({super.key});
+class ParcelTripsScreen extends StatefulWidget {
+  const ParcelTripsScreen({super.key});
 
   @override
-  State<TripScreen> createState() => _TripScreenState();
+  State<ParcelTripsScreen> createState() => _TripScreenState();
 }
 
-class _TripScreenState extends State<TripScreen> {
+class _TripScreenState extends State<ParcelTripsScreen> {
   final RideRequestServices _requestServices = RideRequestServices();
 
   @override
@@ -29,8 +30,10 @@ class _TripScreenState extends State<TripScreen> {
         Provider.of<AppStateProvider>(context, listen: false);
 
     return Scaffold(
+      appBar: CustomAppBar(
+          title: "Parcels", showNavBack: true, centerTitle: false),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _requestServices.requestStream(),
+        stream: _requestServices.parcelRequestStream(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: Loading());
@@ -47,7 +50,7 @@ class _TripScreenState extends State<TripScreen> {
                     height: 50,
                   ),
                   const Text(
-                    "No Trip Requests Found",
+                    "No Parcel Request Available",
                     style: TextStyle(
                       fontFamily: AppConstants.fontFamily,
                       fontSize: AppConstants.defaultTextSize,

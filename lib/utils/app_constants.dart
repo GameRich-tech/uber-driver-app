@@ -142,6 +142,7 @@ class AppConstants {
   static const defaultTextSize = 18.0;
   static const defaultWeight = FontWeight.bold;
   static const greenColor = Colors.green;
+  static bool isOnTrip = false;
 //static List<OnBoardingModel> onBoardPagerData = [
 //  OnBoardingModel(title: 'on_boarding_1_title'.tr, image: 'assets/image/on_board_one.png'),
 //  OnBoardingModel(title: 'on_boarding_2_title'.tr, image: 'assets/image/on_board_two.png'),

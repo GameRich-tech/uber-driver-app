@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:Bucoride_Driver/helpers/constants.dart';
-import 'package:Bucoride_Driver/providers/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -19,16 +18,17 @@ import '../models/rider.dart';
 import '../models/route.dart';
 import '../services/map_requests.dart';
 import '../services/ride_request.dart';
-import '../services/rider.dart';
 import '../services/user.dart';
 
 enum Show { IDLE, RIDER, TRIP, INSPECTROUTE, COMPLETETRIP }
 
 class AppStateProvider with ChangeNotifier {
-  static const ACCEPTED = 'accepted';
-  static const CANCELLED = 'cancelled';
-  static const PENDING = 'pending';
-  static const EXPIRED = 'expired';
+  static const ACCEPTED = 'ACCEPTED';
+  static const CANCELLED = 'CANCELLED';
+  static const PENDING = 'PENDING';
+  static const EXPIRED = 'EXPIRED';
+
+  static const CURRENT_LOCATION = 'CURRENT_LOCATION';
   // ANCHOR: VARIABLES DEFINITION
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
@@ -53,17 +53,24 @@ class AppStateProvider with ChangeNotifier {
       latitude: 0, longitude: 0, timestamp: DateTime.timestamp());
   bool hasNewRideRequest = false;
   bool isInMapScreen = false;
+  bool _onTrip = false;
   bool _alertIn = false;
+  bool _hasAcceptedRide = false;
+  bool _hasArrivedAtlocation = false;
 
   UserServices _userServices = UserServices();
 
   bool get inMap => isInMapScreen;
   bool get alertIn => _alertIn;
+  bool get onTrip => _onTrip;
+  bool get hasAcceptedRide => _hasAcceptedRide;
+  bool get hasArrivedAtLocation => _hasArrivedAtlocation;
 
   set alertIn(bool value) {
     _alertIn = value;
     notifyListeners();
   }
+
   //Stream to count number to ride requests
   StreamController<int> _requestCountController = StreamController<int>();
   late StreamSubscription<QuerySnapshot> requestStreamSubscription;
@@ -75,11 +82,10 @@ class AppStateProvider with ChangeNotifier {
   Map<String, dynamic>? _currentRequest;
   Map<String, dynamic>? get currentRequest => _currentRequest;
 
-  late RequestModelFirebase requestModelFirebase;
-  late RiderModel riderModel;
+  RequestModelFirebase? requestModelFirebase;
+  RiderModel? riderModel;
   List<RequestModelFirebase> pendingTrips = [];
   List<RiderModel> pendingTrip = [];
-  late RiderServices _riderServices = RiderServices();
 
   late double distanceFromRider = 0;
   late double totalRideDistance = 0;
@@ -99,12 +105,26 @@ class AppStateProvider with ChangeNotifier {
   }
 
   AppStateProvider() {
-    InitialiseRequests();
     _enableNotifications();
 
-//    _subscribeUser();
     saveDeviceToken();
+  }
 
+  void acceptRide() {
+    _hasAcceptedRide = true;
+    //if we accept we prevent other requests
+
+    notifyListeners();
+  }
+
+  void hasArrivedAtlocation(bool value) {
+    _hasArrivedAtlocation = value;
+    notifyListeners();
+  }
+
+  void setRideStatus(bool bool) {
+    _hasAcceptedRide = bool;
+    notifyListeners();
   }
 
   //This prevents the user from getting
@@ -175,7 +195,7 @@ class AppStateProvider with ChangeNotifier {
     if (distance >= 50) {
       if (show == Show.RIDER) {
         sendRequest(
-            coordinates: requestModelFirebase.getCoordinates(),
+            coordinates: requestModelFirebase!.getCoordinates(),
             intendedLocation: '');
       }
       _userServices.updateUserData(values);
@@ -334,14 +354,13 @@ class AppStateProvider with ChangeNotifier {
   }
 
   Future<void> addNewRideRequest(Map<String, dynamic> request) async {
+    //Here we add the list of ride rquest to a list silently
     var rideRequest = RequestModelFirebase.fromMap(request);
 
-    show = Show.RIDER;
     pendingTrips.add(rideRequest);
-    print("Pending Tripes=========" + "${pendingTrips}");
-    notifyListeners();
+    _numberOfRequests = pendingTrip.length + 1;
 
-    //_initializeRiderModel(rideRequest);
+    notifyListeners();
   }
 
   void showRideRequestDialog(
@@ -366,70 +385,97 @@ class AppStateProvider with ChangeNotifier {
     );
   }
 
-  void InitialiseRequests() {
+  ///calculate distance from client to driver
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double R = 6371; // Earth radius in km
+    print("calcu;ating position distances");
+    double dLat = (lat2 - lat1) * (pi / 180);
+    double dLon = (lon2 - lon1) * (pi / 180);
+
+    double a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1 * (pi / 180)) *
+            cos(lat2 * (pi / 180)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
+
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c; // Distance in km
+  }
+
+  RequestModelFirebase? activeRequest;
+
+  Future<void> initialiseRequests() async {
     print("======Initialise Requests======");
+
     requestStream = RideRequestServices().requestStream().listen(
-      (querySnapshot) {
-        querySnapshot.docChanges.forEach((change) async {
+      (querySnapshot) async {
+        for (var change in querySnapshot.docChanges) {
           if (change.type == DocumentChangeType.added) {
-            _numberOfRequests = querySnapshot.docs.length;
-            // Handle new ride request
-            var request = change.doc.data() as Map<String, dynamic>?;
-            print(request);
-            if (request != null) {
-              print('New ride request: $request');
-              // Map request to RequestModelFirebase
-              requestModelFirebase = RequestModelFirebase.fromMap(request);
+            var requestData = change.doc.data() as Map<String, dynamic>?;
 
-              // Extract userId
-              String userId = requestModelFirebase.userId;
+            if (requestData != null &&
+                requestData.containsKey('position') &&
+                requestData['position'] is Map &&
+                requestData['position'].containsKey('latitude') &&
+                requestData['position'].containsKey('longitude')) {
+              double pickupLat = requestData['position']['latitude'];
+              double pickupLng = requestData['position']['longitude'];
 
-              // Fetch rider details using userId
-              riderModel = await RiderServices().getRiderById(userId);
+              // Fetch Driver's Current Location
+              Position driverPosition = await Geolocator.getCurrentPosition(
+                desiredAccuracy: LocationAccuracy.high,
+              );
 
-              // Print rider details (optional)
-              print('Rider details: ${riderModel}');
+              print(
+                  "Driver Location 📩: ${driverPosition.latitude}, ${driverPosition.longitude}");
+              print("Requested Data is: $requestData");
 
-              // Continue with further processing
-              // addNewRideRequest(requestModelFirebase);
-              // showRideRequestDialog(context, request);
+              // Calculate distance
+              double distance = calculateDistance(
+                driverPosition.latitude,
+                driverPosition.longitude,
+                pickupLat,
+                pickupLng,
+              );
+
+              print("🚗 Distance to pickup: $distance km");
+
+              // Only handle requests within 10 km
+              if (distance <= 10.0) {
+                addNewRideRequest(requestData);
+
+                if (!hasAcceptedRide) {
+                  var requestModel = RequestModelFirebase.fromMap(requestData);
+                  print('✅ New nearby ride request: $requestModel');
+                  requestModelFirebase = requestModel;
+                  fetchRiderDetails(requestModelFirebase!.userId);
+                  show = Show.RIDER;
+                }
+
+                notifyListeners(); // Notify UI
+              } else {
+                print("❌ Ignored request. Too far away ($distance km)");
+              }
+            } else {
+              print("⚠️ Missing position data in request: $requestData");
             }
           }
-        });
+        }
       },
       onError: (error) {
-        print('Error listening to ride requests: $error'); // Print any errors
+        print('Error listening to ride requests: $error');
       },
     );
   }
 
-  listenToRequest({required String id, required BuildContext context}) async {
-    print("======= LISTENING =======");
-    requestStream = _requestServices.requestStream().listen((querySnapshot) {
-      querySnapshot.docChanges.forEach((doc) {
-        var data = doc.doc.data() as Map<String, dynamic>?; // Cast to Map
+  void StopStream() {
+    requestStream.cancel();
+    print("Stopping Service no vehicles added");
+  }
 
-        if (data != null && data['id'] == id) {
-          requestModelFirebase = RequestModelFirebase.fromSnapshot(doc.doc);
-          notifyListeners();
-
-          switch (data['status']) {
-            case CANCELLED:
-              print("====== CANCELLED");
-              break;
-            case ACCEPTED:
-              print("====== ACCEPTED");
-              break;
-            case EXPIRED:
-              print("====== EXPIRED");
-              break;
-            default:
-              print("==== PENDING");
-              break;
-          }
-        }
-      });
-    });
+  void resetAlert() {
+    alertIn = false;
+    notifyListeners();
   }
 
   //  Timer counter for driver request
@@ -451,19 +497,39 @@ class AppStateProvider with ChangeNotifier {
     });
   }
 
-  // Accept Request Function
-  void handleAccept(Map<String, dynamic> request, driverId) {
-    final updatedRequest = {
-      ...request,
-      'status': 'accepted',
-      'driverId': '${driverId}', // Replace with actual driver ID
-    };
-    _requestServices.updateRequest(updatedRequest);
+  // Accept Request of the Trip
+  void handleAccept(String requestId, driverId) {
+    print(requestId);
+    print(driverId);
+
+    _requestServices.updateRequest(
+        {"id": requestId, "driverId": driverId, "status": "ACCEPTED"});
   }
 
+  // Tell the system we have arrived at passenger location
+  void handleArrived(String requestId, driverId) {
+    print(requestId);
+    print(driverId);
+
+    _requestServices.updateRequest(
+        {"id": requestId, "driverId": driverId, "status": "ARRIVED"});
+  }
+
+  // Tell the system we have arrived at passenger location
+  void startTrip(String requestId, driverId) {
+    print(requestId);
+    print(driverId);
+
+    _requestServices.updateRequest(
+        {"id": requestId, "driverId": driverId, "status": "ONTRIP"});
+  }
+
+// Cance the request
   cancelRequest({required String requestId}) {
     hasNewRideRequest = false;
-    _requestServices.updateRequest({"id": requestId, "status": "cancelled"});
+    _hasAcceptedRide = false;
+    _requestServices.updateRequest({"id": requestId, "status": "CANCELLED"});
+
     notifyListeners();
   }
 
@@ -472,46 +538,34 @@ class AppStateProvider with ChangeNotifier {
     show = showWidget;
     notifyListeners();
   }
+
   Future<void> completeTrip(String requestId) async {
-  if (requestId.isEmpty) return;
+    if (requestId.isEmpty) return;
 
-  try {
-    
+    try {
+      // 1️⃣ Get the current request from Firestore
+      DocumentReference requestRef =
+          FirebaseFirestore.instance.collection('requests').doc(requestId);
 
-    // 1️⃣ Get the current request from Firestore
-    DocumentReference requestRef =
-        FirebaseFirestore.instance.collection('rideRequests').doc(requestId);
+      await requestRef.update({
+        'status': 'COMPLETED',
+        'completedAt': FieldValue.serverTimestamp(),
+      });
+      hasArrivedAtlocation(false);
 
-    await requestRef.update({
-      'status': 'completed',
-      'completedAt': FieldValue.serverTimestamp(),
-    });
-    
+      show = Show.IDLE;
 
-    // 2️⃣ Increment the driver's trip count in Firestore
-    //String driverId = userModel?.id ?? ''; // Ensure the driver ID exists
-    //DocumentReference driverRef =
-    //    FirebaseFirestore.instance.collection('users').doc(driverId);
+      notifyListeners(); // Notify UI about the state change
 
-    //await driverRef.update({
-    //  'trip': FieldValue.increment(1),
-    //});
-
-    // 3️⃣ Reset app state variables
-    //requestModelFirebase = null;
-    show = Show.IDLE;
-
-    notifyListeners(); // Notify UI about the state change
-
-    print("Trip $requestId marked as completed.");
-  } catch (e) {
-    print("Error completing trip: $e");
+      print("Trip $requestId marked as completed.");
+    } catch (e) {
+      print("Error completing trip: $e");
+    }
   }
-}
-
 
   Future<void> fetchRiderDetails(String riderId) async {
     try {
+      print("The Rider Id is ============ $riderId");
       DocumentSnapshot riderDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(riderId)
@@ -520,10 +574,39 @@ class AppStateProvider with ChangeNotifier {
       if (riderDoc.exists) {
         riderModel =
             RiderModel.fromMap(riderDoc.data() as Map<String, dynamic>);
+
+        // Print the entire model to debug
+        print("The RiderModel is: ===== ${riderModel}");
+
+        // Print the photo URL specifically
+        print(
+            "Rider Photo URL: ===== ${riderModel!.photo ?? 'No photo available'}");
+
         notifyListeners();
+      } else {
+        print("Rider document does not exist.");
       }
     } catch (e) {
       print("Error fetching rider details: $e");
     }
+  }
+
+  void setHasNewRideRequest(bool bool) {
+    hasNewRideRequest = bool;
+    notifyListeners();
+  }
+
+  void setTripStatus(bool bool) {
+    _onTrip = bool;
+    notifyListeners();
+  }
+
+  void clearRequests() {
+    riderModel = null; // ✅ Correct assignment
+    requestModelFirebase = null;
+    hasNewRideRequest = false;
+    _numberOfRequests = 0;
+
+    print("Cleared all requests");
   }
 }

@@ -12,23 +12,23 @@ class StarsWidget extends StatelessWidget {
         children: [
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           )
         ],
       );
@@ -42,19 +42,19 @@ class StarsWidget extends StatelessWidget {
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           )
         ],
       );
@@ -69,15 +69,15 @@ class StarsWidget extends StatelessWidget {
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           )
         ],
       );
@@ -93,11 +93,11 @@ class StarsWidget extends StatelessWidget {
           Icon(Icons.star, color: Colors.amber),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           ),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           )
         ],
       );
@@ -114,7 +114,7 @@ class StarsWidget extends StatelessWidget {
           Icon(Icons.star, color: Colors.amber),
           Icon(
             Icons.star,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withAlpha(200),
           )
         ],
       );

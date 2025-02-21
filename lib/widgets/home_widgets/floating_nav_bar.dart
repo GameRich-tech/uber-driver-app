@@ -18,8 +18,10 @@ class CustomBottomNavBar extends StatelessWidget {
       animationDuration: Duration(milliseconds: 300),
       items: [
         CurvedNavigationBarItem(
-          child: Icon(
-            Icons.home_outlined,
+          child: Image.asset(
+            Images.homeActive,
+            width: Dimensions.iconSizeLarge,
+            height: Dimensions.iconSizeLarge,
             color: Colors.white,
           ),
           label: 'Home',

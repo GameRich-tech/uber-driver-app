@@ -6,9 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/trip.dart';
+import '../models/ride_Request.dart';
 import '../models/user.dart';
 import '../services/user.dart';
 
@@ -40,13 +41,30 @@ class UserProvider with ChangeNotifier {
   final TextEditingController password = TextEditingController();
   final TextEditingController name = TextEditingController();
   final TextEditingController phone = TextEditingController();
+  final TextEditingController identification = TextEditingController();
+  final TextEditingController otpController = TextEditingController();
+  List<RequestModelFirebase> _trips = [];
+  List<RequestModelFirebase> get trips => _trips;
+  File? profileImage;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  List<TripModel> _trips = [];
-  List<TripModel> get trips => _trips;
-
-  UserProvider.initialize() {
+  UserProvider() {
     _initialize();
+  }
+
+  String? _verificationId;
+  String _formattedPhone = "";
+  String get formattedPhone => _formattedPhone;
+
+  void setFormattedPhone(String phoneNumber) {
+    _formattedPhone = phoneNumber;
+    notifyListeners();
+  }
+
+  String? get verificationId => _verificationId;
+
+  set verificationId(String? id) {
+    _verificationId = id;
+    notifyListeners(); // Notify listeners when it's updated
   }
 
   get isRememberMe => false;
@@ -66,7 +84,12 @@ class UserProvider with ChangeNotifier {
         password: password.text.trim(),
       );
 
+      // if (user != null && _user!.emailVerified) {
+      //   return "Please verify your email before logging in.";
+      // }
+
       _user = result.user;
+
       if (_user != null) {
         if (_isActiveRememberMe) {
           await _saveUserToPreferences(_user!);
@@ -88,21 +111,121 @@ class UserProvider with ChangeNotifier {
           return "Wrong password provided for the user.";
         case 'invalid-email':
           return "The email address is not valid.";
+        case 'The supplied auth credential is incorrect, malformed or has expired.':
+          return "Incorrect credentials";
         default:
           return e.message ?? "An unknown error occurred.";
       }
     } catch (e) {
       _status = Status.Unauthenticated;
       notifyListeners();
-      return "An unknown error occurred: $e";
+      return "An unknown error occurred when authenticating: $e";
+    }
+  }
+
+  Future<bool> PhoneSignIn(String phoneNumber, BuildContext context) async {
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await _auth.signInWithCredential(credential);
+          _status = Status.Authenticated;
+          notifyListeners();
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          _status = Status.Unauthenticated;
+          notifyListeners();
+
+          String errorMessage = "Verification failed. Try again.";
+
+          if (e.code == 'invalid-phone-number') {
+            errorMessage =
+                "Invalid phone number format. Please check and try again.";
+          } else if (e.code == 'quota-exceeded') {
+            errorMessage = "Too many OTP requests. Try again later.";
+          } else {
+            errorMessage = e.message ?? errorMessage;
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage)),
+          );
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          this.verificationId = verificationId;
+          notifyListeners();
+
+          // ✅ Notify user OTP is sent
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("OTP sent successfully!")),
+          );
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          this.verificationId = verificationId;
+        },
+      );
+
+      return true; // ✅ OTP Sent Successfully
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+      return false; // ❌ Failed to Send OTP
+    }
+  }
+
+  Future<void> resendVerificationEmail() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null && !user.emailVerified) {
+      await user.sendEmailVerification();
+    }
+  }
+
+  Future<String> uploadProfilePix(File imageFile, String uid) async {
+    try {
+      // ✅ Create storage reference for user's profile picture
+      Reference storageRef =
+          FirebaseStorage.instance.ref().child("profile_pictures/$uid.jpg");
+
+      // ✅ Upload the file
+      UploadTask uploadTask = storageRef.putFile(imageFile);
+      TaskSnapshot snapshot = await uploadTask;
+
+      // ✅ Get the download URL
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      throw "Error uploading profile picture: $e";
+    }
+  }
+
+  Future<String> ResetPassword() async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.text.trim());
+      return "Success";
+    } on FirebaseException catch (e) {
+      return ("Something Went Wrong. Check your Email");
     }
   }
 
   /// Sign-up method
-  Future<String> signUp() async {
+  Future<String> signUp(
+      {required String idNumber, required File profileImage}) async {
     try {
+      // Validate Required Fields
       if (email.text.trim().isEmpty || password.text.trim().isEmpty) {
         return "Email and Password cannot be empty.";
+      }
+      if (name.text.trim().isEmpty) {
+        return "Full Name is required.";
+      }
+      if (phone.text.trim().isEmpty) {
+        return "Phone number is required.";
+      }
+
+      if (idNumber.isEmpty) {
+        return "Identification number is required.";
       }
 
       _status = Status.Authenticating;
@@ -115,21 +238,51 @@ class UserProvider with ChangeNotifier {
 
       _user = result.user;
       if (_user != null) {
+        // ✅ Step 3: Upload Profile Picture After Signup
+        String imageUrl = await uploadProfilePix(profileImage, _user!.uid);
+
+        // ✅ Step 4: Update Firebase User Profile
+        await _user!.updateDisplayName(name.text.trim());
+        await _user!.updatePhotoURL(imageUrl);
+
+        //await _user!.sendEmailVerification();
+
         await _saveUserToPreferences(_user!);
-        await user?.updateDisplayName(name.text.trim()); // ✅ Save display name
-        await user?.reload(); // Refresh user info
+        await _user!.updateDisplayName(name.text.trim()); // ✅ Save display name
+        await _user!.reload(); // Refresh user info
 
         _userServices.createUser(
           id: _user!.uid,
           name: name.text.trim(),
           email: email.text.trim(),
           phone: phone.text.trim(),
+          photo: imageUrl,
+          hasVehicle: false,
+          identification: idNumber,
           position: {},
           token: '',
         );
+
+        // Step 3: Link Phone Number to FirebaseAuth
+        // await _auth.verifyPhoneNumber(
+        //   phoneNumber: phone.text.trim(),
+        //   verificationCompleted: (PhoneAuthCredential credential) async {
+        //     await _user!.linkWithCredential(credential);
+        //   },
+        //   verificationFailed: (FirebaseAuthException e) {
+        //     print("Phone verification failed: ${e.message}");
+        //     //return "Check Your Phone Number";
+        //   },
+        //   codeSent: (String verificationId, int? resendToken) {
+        //     print("OTP Sent");
+        //   },
+        //   codeAutoRetrievalTimeout: (String verificationId) {},
+        // );
+
         _userModel = await _userServices.getUserById(_user!.uid);
         _status = Status.Authenticated;
         notifyListeners();
+
         return "Success";
       } else {
         return "Failed to create user.";
@@ -171,7 +324,8 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateProfile({required String displayName, File? photoFile}) async {
+  Future<void> updateProfile(
+      {required String displayName, File? photoFile}) async {
     String? photoURL;
 
     // Upload photo to Firebase Storage if selected
@@ -184,7 +338,10 @@ class UserProvider with ChangeNotifier {
     }
 
     // Update Firestore with the display name and photoURL
-    await FirebaseFirestore.instance.collection('drivers').doc(user!.uid).update({
+    await FirebaseFirestore.instance
+        .collection('drivers')
+        .doc(user!.uid)
+        .update({
       'displayName': displayName,
       if (photoURL != null) 'photoURL': photoURL,
     });
@@ -199,6 +356,7 @@ class UserProvider with ChangeNotifier {
     _user = FirebaseAuth.instance.currentUser;
     notifyListeners();
   }
+
   /// Reload user model after updates
   Future<void> reloadUserModel() async {
     if (_user != null) {
@@ -206,6 +364,28 @@ class UserProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<String?> uploadProfilePicture() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile == null) return null;
+
+    File file = File(pickedFile.path);
+    String fileName = "profile_${DateTime.now().millisecondsSinceEpoch}.jpg";
+
+    try {
+      TaskSnapshot snapshot = await FirebaseStorage.instance
+          .ref("profile_pictures/$fileName")
+          .putFile(file);
+
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      print("Error uploading image: $e");
+      return null;
+    }
+  }
+
   // Method to refresh user data from Firebase
   Future<void> refreshUser() async {
     if (_user != null) {
@@ -215,9 +395,34 @@ class UserProvider with ChangeNotifier {
     }
   }
 
+  Future<void> deleteAccount() async {
+    if (_user != null) {
+      await _user!.delete();
+      await _clearUserFromPreferences();
+      _status = Status.Unauthenticated;
+      _user = null;
+      _userModel = null;
+
+      notifyListeners();
+    }
+  }
+
   /// Update user data
   Future<void> updateUserData(Map<String, dynamic> data) async {
     _userServices.updateUserData(data);
+    await reloadUserModel();
+    notifyListeners();
+  }
+
+  Future<void> incrementTripCount() async {
+    DocumentReference userDoc =
+        FirebaseFirestore.instance.collection('drivers').doc(userModel?.id);
+
+    await userDoc.update({
+      'trips': FieldValue.increment(1), // Increments the 'trips' field by 1
+    });
+    print("added Trips");
+    // Reload user model to reflect the updated trip count
     await reloadUserModel();
   }
 
@@ -232,9 +437,12 @@ class UserProvider with ChangeNotifier {
   /// Initialize user status and preferences
   Future<void> _initialize() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    _isActiveRememberMe = prefs.getBool('remember_me') ?? false;
+    _isActiveRememberMe = await prefs.getBool('remember_me') ?? false;
 
-    bool isLoggedIn = prefs.getBool(LOGGED_IN) ?? false;
+    bool isLoggedIn = await prefs.getBool(LOGGED_IN) ?? false;
+
+    print("IsLogged In====:${isLoggedIn}");
+    print("ISACTIVE REMEMBER ME:========${_isActiveRememberMe}");
     if (isLoggedIn && _isActiveRememberMe) {
       String? userId = prefs.getString(ID);
       if (userId != null) {
@@ -266,32 +474,13 @@ class UserProvider with ChangeNotifier {
     await _secureStorage.deleteAll();
   }
 
-  // Fetch trips for the currently logged-in driver
-  Future<void> fetchDriverTrips() async {
-    try {
-      if (_userModel == null) return; // Ensure user is logged in
-      String driverId = _userModel!.id;
-
-      QuerySnapshot snapshot = await _firestore
-          .collection('trips')
-          .where('driverId', isEqualTo: driverId)
-          .orderBy('date', descending: true)
-          .get();
-
-      _trips =
-          snapshot.docs.map((doc) => TripModel.fromFirestore(doc)).toList();
-      notifyListeners();
-    } catch (e) {
-      print("Error fetching trips: $e");
-    }
-  }
-
   // Inside UserProvider class
   void clearController() {
     email.clear();
     password.clear();
     name.clear();
     phone.clear();
+    identification.clear();
   }
 
   void toggleRememberMe() async {

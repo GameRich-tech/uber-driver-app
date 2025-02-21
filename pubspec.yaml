@@ -15,7 +15,7 @@ dependencies:
   carousel_slider: ^5.0.0
 
   firebase_auth: 5.4.1
-  firebase_core: ^3.2.0
+  firebase_core: ^3.11.0
   firebase_messaging: ^15.0.3
   firebase_crashlytics: ^4.0.3
   flutter_google_places_sdk: ^0.3.2+1
@@ -28,6 +28,7 @@ dependencies:
   googlemaps_flutter_webservices: ^1.0.2
   geocoding: ^3.0.0
   get: ^4.6.6
+  google_fonts: ^6.2.0
 
   firebase_storage: ^12.4.1
   image_picker: ^1.1.2
@@ -48,6 +49,7 @@ dependencies:
   flutter_speed_dial: ^7.0.0
   http: ^1.0.0
   flutter_local_notifications: ^18.0.1
+  firebase_app_check: ^0.3.2+2
 
 dev_dependencies:
   flutter_test:
@@ -67,12 +69,12 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - images/
     - assets/image/
     - assets/language/
     - assets/svg/
     - assets/map/
     - assets/lottie_files/
+    - assets/animations/
   #  - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.io/assets-and-images/#resolution-aware.

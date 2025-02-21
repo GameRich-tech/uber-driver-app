@@ -10,7 +10,7 @@ import '../helpers/stars_method.dart';
 import '../helpers/style.dart';
 import '../models/ride_Request.dart';
 import '../providers/app_provider.dart';
-import '../providers/user.dart';
+
 import '../utils/app_constants.dart';
 import '../widgets/custom_btn.dart';
 import '../widgets/custom_text.dart';
@@ -21,7 +21,7 @@ class RideRequestScreen extends StatefulWidget {
 }
 
 class _RideRequestScreenState extends State<RideRequestScreen> {
-  DocumentSnapshot? _document;
+
   late StreamSubscription<QuerySnapshot> requestStreamSubscription;
 
   @override
@@ -61,7 +61,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
   Widget build(BuildContext context) {
     AppStateProvider appState =
         Provider.of<AppStateProvider>(context, listen: true);
-    UserProvider userProvider = Provider.of<UserProvider>(context);
+
     _loadPendingDocument();
     return SafeArea(
         child: Scaffold(
@@ -84,7 +84,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (appState.riderModel.photo == null)
+                if (appState.riderModel!.photo == null)
                   Container(
                     decoration: BoxDecoration(
                         color: Colors.grey,
@@ -99,14 +99,14 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                       ),
                     ),
                   ),
-                if (appState.riderModel.photo != null)
+                if (appState.riderModel!.photo != null)
                   Container(
                     decoration: BoxDecoration(
                         color: Colors.deepOrange,
                         borderRadius: BorderRadius.circular(40)),
                     child: CircleAvatar(
                       radius: 45,
-                      backgroundImage: NetworkImage(appState.riderModel.photo),
+                      backgroundImage: NetworkImage(appState.riderModel!.photo),
                     ),
                   ),
               ],
@@ -116,7 +116,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CustomText(
-                  text: appState.riderModel.name,
+                  text: appState.riderModel!.name,
                   size: 20,
                   color: AppConstants.darkPrimary,
                   weight: AppConstants.defaultWeight,
@@ -125,8 +125,8 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
             ),
             SizedBox(height: 10),
             stars(
-                rating: appState.riderModel.rating,
-                votes: appState.riderModel.votes),
+                rating: appState.riderModel!.rating,
+                votes: appState.riderModel!.votes),
             Divider(),
             ListTile(
               title: Row(
@@ -200,7 +200,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                 CustomBtn(
                   text: "Accept",
                   onTap: () async {
-                    if (appState.requestModelFirebase.status != "pending") {
+                    if (appState.requestModelFirebase!.status != "pending") {
                       showDialog(
                           context: context,
                           builder: (BuildContext context) {
@@ -235,7 +235,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                       appState.changeWidgetShowed(showWidget: Show.RIDER);
                       appState.sendRequest(
                           coordinates:
-                              appState.requestModelFirebase.getCoordinates(),
+                              appState.requestModelFirebase!.getCoordinates(),
                           intendedLocation: '');
 //                      showDialog(
 //                          context: context,

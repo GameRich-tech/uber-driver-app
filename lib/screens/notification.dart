@@ -17,7 +17,7 @@ class _TripHistoryState extends State<NotificationHistory> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<UserProvider>(context, listen: false).fetchDriverTrips();
+      //Add
     });
   }
 
@@ -85,9 +85,9 @@ class _TripHistoryState extends State<NotificationHistory> {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Pickup: ${trip.pickupLocation}"),
-                          Text("Date: ${trip.date}"),
-                          Text("Fare: \$${trip.fare}"),
+                          //Text("Pickup: ${trip['destination']['address'] ?? 'Unknown'}"),
+                          //Text("Date: ${trip.}"),
+                          //Text("Fare: \$${trip.distance.values}"),
                         ],
                       ),
                       trailing: Icon(Icons.arrow_forward_ios, size: 16),
