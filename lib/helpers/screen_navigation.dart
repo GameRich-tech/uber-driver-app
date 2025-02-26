@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:page_animation_transition/animations/top_to_bottom_faded.dart';
+import 'package:page_animation_transition/page_animation_transition.dart';
 
-changeScreen(BuildContext context, Widget widget) {
-  Navigator.push(context, MaterialPageRoute(builder: (context) => widget));
+void changeScreen(BuildContext context, Widget widget) {
+  Navigator.push(
+    context,
+    PageAnimationTransition(
+      page: widget,
+      pageAnimationType: TopToBottomFadedTransition(), // Change animation here
+    ),
+  );
 }
 
-// request here
-changeScreenReplacement(BuildContext context, Widget widget) {
+void changeScreenReplacement(BuildContext context, Widget widget) {
   Navigator.pushReplacement(
-      context, MaterialPageRoute(builder: (context) => widget));
+    context,
+    PageAnimationTransition(
+      page: widget,
+      pageAnimationType: TopToBottomFadedTransition(), // Change animation here
+    ),
+  );
 }

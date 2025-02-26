@@ -4,6 +4,7 @@ import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
 import 'package:Bucoride_Driver/screens/intro_pages/OnBoard.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
@@ -52,6 +53,11 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
     _controller.forward();
 
     _route();
+    _hideSystemUI();
+  }
+
+  void _hideSystemUI() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
   @override
@@ -101,7 +107,10 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
         Provider.of<AppStateProvider>(context, listen: false);
 
     await Future.delayed(Duration(seconds: 7)); // add delay for splash
-
+    while (auth.status == Status.Authenticating) {
+      await Future.delayed(
+          Duration(milliseconds: 100)); // Wait for authentication
+    }
     if (auth.status == Status.Authenticated) {
       // Navigate to Home if authenticated
       changeScreenReplacement(context, Menu());
@@ -146,7 +155,7 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
                                   ((120 *
                                       double.tryParse(
                                           _animation.value.toString())!))),
-                          child: Image.asset(Images.logoWithName, width: 160),
+                          child: Image.asset(Images.logoWithName, width: 50),
                         ),
                       ),
                       const SizedBox(height: Dimensions.paddingSizeExtraLarge),

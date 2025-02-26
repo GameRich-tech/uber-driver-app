@@ -9,6 +9,7 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:provider/provider.dart';
 
 import '../../helpers/screen_navigation.dart';
+import '../../providers/app_provider.dart';
 import '../../providers/user.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/dimensions.dart';
@@ -56,6 +57,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   Widget build(BuildContext context) {
     UserProvider authProvider =
         Provider.of<UserProvider>(context, listen: true);
+    final appState  = Provider.of<AppStateProvider>(context);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -226,19 +228,20 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             InkWell(
                               onTap: () async {
                                 if (_profileImage == null) {
-                                  showError("Profile picture is required!");
+                                  showError("Profile picture is required!", appState);
                                   return;
                                 }
                                 if (authProvider.identification.text.isEmpty) {
                                   showError(
-                                      "Identification number is required!");
+                                      "Identification number is required!", appState);
                                   return;
                                 }
                                 if (authProvider.name.text.isEmpty ||
                                     authProvider.email.text.isEmpty ||
                                     authProvider.phone.text.isEmpty ||
                                     authProvider.password.text.isEmpty) {
-                                  showError("All fields are required!");
+                                  showError("All fields are required!", appState);
+
                                   return;
                                 }
 
@@ -257,9 +260,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                   changeScreenReplacement(
                                       context, LoginScreen());
                                   showError(
-                                      "Account Creation Successful. Login");
+                                      "Account Creation Successful. Login", appState);
                                 } else {
-                                  showError(resultMessage);
+                                  showError(resultMessage, appState);
                                 }
                                 authProvider.clearController();
                                 authProvider.identification.clear();
@@ -350,9 +353,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     );
   }
 
-  void showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+  void showError(String message, AppStateProvider appState) {
+    appState.showCustomSnackBar(context, message, AppConstants.darkPrimary);
   }
 
   void checkEmailVerification() async {

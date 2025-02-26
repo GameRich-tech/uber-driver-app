@@ -36,10 +36,10 @@ class _RadarAnimationState extends State<RadarAnimation>
               child: // Lottie animation (replace with a real animation file)
                   Lottie.asset(
                 'assets/animations/Animation - 1739866740839.json',
-                height: 250,
+                height: 200,
                 fit: BoxFit.contain,
                 animate: true,
-                repeat: true,
+                repeat: false,
               ),
             ),
           ),

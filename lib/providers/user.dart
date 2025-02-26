@@ -436,6 +436,7 @@ class UserProvider with ChangeNotifier {
 
   /// Initialize user status and preferences
   Future<void> _initialize() async {
+    _status = Status.Authenticating;
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _isActiveRememberMe = await prefs.getBool('remember_me') ?? false;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../../helpers/constants.dart';
 import '../../helpers/screen_navigation.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/location_provider.dart';
@@ -9,6 +10,7 @@ import '../../utils/app_constants.dart';
 import '../../utils/images.dart';
 import '../../widgets/loading.dart';
 import '../menu.dart';
+import '../parcels/parcel_trips.dart';
 import '../trips/available_trips.dart';
 
 class MapScreen extends StatefulWidget {
@@ -74,6 +76,7 @@ class _MapScreenState extends State<MapScreen> {
                 polylines: _polylines,
               ),
 
+              /// FAB for home
               Positioned(
                 top: MediaQuery.of(context).size.height *
                     0.05, // Adjust percentage
@@ -107,6 +110,44 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
               ),
+
+              if (!appState.hasAcceptedRide)
+
+                /// FAB for Parcels
+                Positioned(
+                  top: MediaQuery.of(context).size.height *
+                      0.11, // Adjust percentage
+                  left: MediaQuery.of(context).size.width * 0.05,
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    padding: EdgeInsets.all(
+                        8), // Adds spacing inside the red background
+                    decoration: BoxDecoration(
+                      color: AppConstants.lightPrimary, // Red background
+                      borderRadius: BorderRadius.circular(border_radius),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              Colors.grey.withAlpha(128), // 128 is 50% opacity
+                          spreadRadius: 2,
+                          blurRadius: 6,
+                          offset: Offset(0, 3), // Changes position of shadow
+                        ),
+                      ], // Rounded corners
+                    ),
+
+                    child: IconButton(
+                      icon: Image.asset(
+                        Images.parcel,
+                      ),
+                      onPressed: () {
+                        changeScreen(context, ParcelTripsScreen());
+                      },
+                    ),
+                  ),
+                ),
+
               // New FAB for Centering Location
               Positioned(
                 top: MediaQuery.of(context).size.height * 0.53,
@@ -181,15 +222,16 @@ class _MapScreenState extends State<MapScreen> {
                 // Requests
                 Positioned(
                   top: MediaQuery.of(context).size.height * 0.55,
-                  left: 150,
-                  right: 150,
-                  width: MediaQuery.of(context).size.width * 0.55,
+                  left: (MediaQuery.of(context).size.width -
+                          MediaQuery.of(context).size.width * 0.55) /
+                      2, // Centering horizontally
                   child: GestureDetector(
                     onTap: () {
                       changeScreen(context, TripScreen());
                     },
                     child: Container(
-                      width: 100,
+                      width: MediaQuery.of(context).size.width *
+                          0.55, // Set the width here
                       padding:
                           EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
@@ -233,7 +275,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ),
                   ),
-                ),
+                )
             ],
           );
   }

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
 import '../../helpers/screen_navigation.dart';
+import '../../providers/app_provider.dart';
 import '../../providers/user.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/dimensions.dart';
@@ -54,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<UserProvider>(context);
-
+    final appState = Provider.of<AppStateProvider>(context);
     return Scaffold(
       key: _loginScaffoldKey,
       backgroundColor: AppConstants.lightPrimary,
@@ -68,8 +69,8 @@ class _LoginScreenState extends State<LoginScreen>
                       opacity: _fadeAnimation,
                       child: SingleChildScrollView(
                         child: Padding(
-                          padding:
-                              const EdgeInsets.all(Dimensions.paddingSizeExtraSmall),
+                          padding: const EdgeInsets.all(
+                              Dimensions.paddingSizeExtraSmall),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -172,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 ],
                               ),
                               const SizedBox(height: 16.0),
-                              _buildLoginButton(authProvider),
+                              _buildLoginButton(authProvider, appState),
                               const SizedBox(height: 16.0),
                               _buildDivider(),
                               const SizedBox(height: 16.0),
@@ -217,16 +218,16 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildLoginButton(UserProvider authProvider) {
+  Widget _buildLoginButton(
+      UserProvider authProvider, AppStateProvider appState) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
           String resultMessage = await authProvider.signIn();
           if (resultMessage != "Success") {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(resultMessage)),
-            );
+            appState.showCustomSnackBar(
+                context, resultMessage, AppConstants.darkPrimary);
             return;
           }
           authProvider.clearController();

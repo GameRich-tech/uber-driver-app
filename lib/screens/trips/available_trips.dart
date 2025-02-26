@@ -133,8 +133,7 @@ class _TripScreenState extends State<TripScreen> {
                                       appState.show = Show.INSPECTROUTE;
                                       // Set the request in the provider
                                       appState.setRequest(request);
-                                      changeScreen(
-                                          context, HomePage(title: ''));
+                                      changeScreen(context, HomePage());
                                     },
                                   ),
                                 ],

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:Bucoride_Driver/helpers/constants.dart';
+import 'package:Bucoride_Driver/services/parcel_request.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -13,12 +14,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../helpers/style.dart';
+import '../models/parcel_request.dart';
 import '../models/ride_Request.dart';
 import '../models/rider.dart';
 import '../models/route.dart';
 import '../services/map_requests.dart';
 import '../services/ride_request.dart';
 import '../services/user.dart';
+import '../utils/dimensions.dart';
 
 enum Show { IDLE, RIDER, TRIP, INSPECTROUTE, COMPLETETRIP }
 
@@ -84,6 +87,8 @@ class AppStateProvider with ChangeNotifier {
 
   RequestModelFirebase? requestModelFirebase;
   RiderModel? riderModel;
+  ParcelRequestModel? parcelRequestModel;
+
   List<RequestModelFirebase> pendingTrips = [];
   List<RiderModel> pendingTrip = [];
 
@@ -94,6 +99,7 @@ class AppStateProvider with ChangeNotifier {
   late double percentage = 0;
   late Timer periodicTimer;
   RideRequestServices _requestServices = RideRequestServices();
+  ParcelRequestServices _parcelRequestServices = ParcelRequestServices();
   late Show show = Show.IDLE;
 
   @override
@@ -506,12 +512,32 @@ class AppStateProvider with ChangeNotifier {
         {"id": requestId, "driverId": driverId, "status": "ACCEPTED"});
   }
 
+  // Accept Request of the Trip
+  void handleParcelAccept(String requestId, driverId) {
+    print(requestId);
+    print(driverId);
+    setRideStatus(true);
+    acceptRide();
+
+    _parcelRequestServices.updateRequest(
+        {"id": requestId, "driverId": driverId, "status": ACCEPTED});
+  }
+
   // Tell the system we have arrived at passenger location
   void handleArrived(String requestId, driverId) {
     print(requestId);
     print(driverId);
 
     _requestServices.updateRequest(
+        {"id": requestId, "driverId": driverId, "status": "ARRIVED"});
+  }
+
+  // Tell the system we have arrived at passenger location
+  void handleParcelArrived(String requestId, driverId) {
+    print(requestId);
+    print(driverId);
+
+    _parcelRequestServices.updateRequest(
         {"id": requestId, "driverId": driverId, "status": "ARRIVED"});
   }
 
@@ -524,6 +550,15 @@ class AppStateProvider with ChangeNotifier {
         {"id": requestId, "driverId": driverId, "status": "ONTRIP"});
   }
 
+  // Tell the system we have arrived at passenger location
+  void startParcelTrip(String requestId, driverId) {
+    print(requestId);
+    print(driverId);
+
+    _parcelRequestServices.updateRequest(
+        {"id": requestId, "driverId": driverId, "status": "ONTRIP"});
+  }
+
 // Cance the request
   cancelRequest({required String requestId}) {
     hasNewRideRequest = false;
@@ -533,10 +568,43 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  cancelParcelRequest({required String requestId}) {
+    hasNewRideRequest = false;
+    _hasAcceptedRide = false;
+    _parcelRequestServices
+        .updateRequest({"id": requestId, "status": "CANCELLED"});
+
+    notifyListeners();
+  }
+
   //  ANCHOR UI METHODS
   changeWidgetShowed({required Show showWidget}) {
     show = showWidget;
     notifyListeners();
+  }
+
+  Future<void> completeParcelTrip(String requestId) async {
+    if (requestId.isEmpty) return;
+
+    try {
+      // 1️⃣ Get the current request from Firestore
+      DocumentReference requestRef =
+          FirebaseFirestore.instance.collection('parcels').doc(requestId);
+
+      await requestRef.update({
+        'status': 'COMPLETED',
+        'completedAt': FieldValue.serverTimestamp(),
+      });
+      hasArrivedAtlocation(false);
+
+      show = Show.IDLE;
+
+      notifyListeners(); // Notify UI about the state change
+
+      print("Trip $requestId marked as completed.");
+    } catch (e) {
+      print("Error completing trip: $e");
+    }
   }
 
   Future<void> completeTrip(String requestId) async {
@@ -608,5 +676,32 @@ class AppStateProvider with ChangeNotifier {
     _numberOfRequests = 0;
 
     print("Cleared all requests");
+  }
+
+  void showCustomSnackBar(
+      BuildContext context, String content, Color snackBarColor) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.cancel, color: Colors.white, size: 28), // Cancel icon
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                content,
+                style: TextStyle(
+                    fontSize: Dimensions.fontSizeSmall,
+                    fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: snackBarColor, // Alert color
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: Duration(seconds: 4), // Snackbar lasts for 4 seconds
+      ),
+    );
   }
 }

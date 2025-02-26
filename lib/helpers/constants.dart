@@ -17,3 +17,4 @@ String? location_global_address = "Ke";
 
 String country_global_key = "Kenya";
 int selectedNavIndex = 0;
+double border_radius = 25;

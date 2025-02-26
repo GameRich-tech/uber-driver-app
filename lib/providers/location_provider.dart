@@ -8,10 +8,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 
 import '../helpers/constants.dart';
+import '../utils/images.dart';
 
 class LocationProvider with ChangeNotifier {
-
   static const String LOCATION_MARKER = "locationMarker";
+  static const DESTINATION_MARKER_ID = 'destination';
+
   GoogleMapController? _mapController;
 
   // LIST OBJECTS
@@ -37,8 +39,6 @@ class LocationProvider with ChangeNotifier {
   String get eta => _eta;
   String get remainingDistance => _remainingDistance;
 
-
-
 //SETTERS
 
   // BOOLEANS
@@ -50,6 +50,7 @@ class LocationProvider with ChangeNotifier {
   BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarkerWithHue(
     BitmapDescriptor.hueYellow,
   );
+  BitmapDescriptor parcelDestinationIcon = BitmapDescriptor.defaultMarker;
 
   LocationProvider() {
     _startPositionStream();
@@ -222,6 +223,35 @@ class LocationProvider with ChangeNotifier {
   }
 
   void addRiderLocationMarker(LatLng riderPosition) {
+    final riderMarker = Marker(
+      markerId: MarkerId('riderMarker'),
+      position: riderPosition,
+      infoWindow: InfoWindow(title: "Rider Location"),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+    );
+
+    _markers.add(riderMarker);
+    notifyListeners(); // Update UI
+  }
+
+  Future<void> addCustomParcelDestinationMarker(LatLng position) async {
+    clearMarkers();
+
+    BitmapDescriptor icon = await BitmapDescriptor.asset(
+      const ImageConfiguration(
+          size: Size(80, 80), devicePixelRatio: 2.5), // Adjust size if needed
+      Images.mapLocationIcon,
+    );
+
+    _markers.add(Marker(
+      markerId: const MarkerId(DESTINATION_MARKER_ID),
+      position: position,
+      icon: icon,
+      anchor: const Offset(0.5, 1.0), // Align bottom-center
+    ));
+  }
+
+  void addParcelDestinationLocationMarker(LatLng riderPosition) {
     final riderMarker = Marker(
       markerId: MarkerId('riderMarker'),
       position: riderPosition,

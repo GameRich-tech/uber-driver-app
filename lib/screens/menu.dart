@@ -2,13 +2,14 @@ import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
 import 'package:Bucoride_Driver/models/ride_Request.dart';
 import 'package:Bucoride_Driver/screens/add_vehicle_page.dart';
 import 'package:Bucoride_Driver/screens/home.dart';
+import 'package:Bucoride_Driver/screens/parcels/parcel_trips.dart';
 import 'package:Bucoride_Driver/screens/trips/available_trips.dart';
-import 'package:Bucoride_Driver/screens/trips/parcel_trips.dart';
 import 'package:Bucoride_Driver/services/ride_request.dart';
 import 'package:Bucoride_Driver/utils/images.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,6 +37,7 @@ class _MenuState extends State<Menu> {
   @override
   void initState() {
     super.initState();
+    _restoreSystemUI();
 
     _rideRequestServices = RideRequestServices();
 
@@ -63,6 +65,11 @@ class _MenuState extends State<Menu> {
         showAddVehicleSheet(); // Show alert if vehicle is not added
       }
     });
+    _restoreSystemUI();
+  }
+
+  void _restoreSystemUI() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge); // Restore UI
   }
 
   int _selectedIndex = 0;
@@ -253,7 +260,7 @@ class _MenuState extends State<Menu> {
                 });
 
                 appState.show = Show.RIDER;
-                changeScreen(context, HomePage(title: "title"));
+                changeScreen(context, HomePage());
               },
               style: TextButton.styleFrom(
                 backgroundColor: Colors.green,
@@ -343,7 +350,7 @@ class _MenuState extends State<Menu> {
               label: "Requests",
               onTap: () {
                 appState.show == Show.IDLE;
-                changeScreen(context, HomePage(title: "title"));
+                changeScreen(context, HomePage());
               },
               child: SizedBox(
                 child: Stack(

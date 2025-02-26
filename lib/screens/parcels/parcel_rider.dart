@@ -1,6 +1,9 @@
 import 'dart:math';
 
+import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
 import 'package:Bucoride_Driver/providers/location_provider.dart';
+import 'package:Bucoride_Driver/screens/home.dart';
+import 'package:Bucoride_Driver/screens/parcels/parcel_trips.dart';
 import 'package:Bucoride_Driver/utils/images.dart';
 import 'package:Bucoride_Driver/widgets/loading_location.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +11,7 @@ import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../../helpers/constants.dart';
 import '../../helpers/style.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/user.dart';
@@ -16,14 +20,14 @@ import '../../utils/app_constants.dart';
 import '../../utils/dimensions.dart';
 import '../../widgets/loading.dart';
 
-class RiderWidget extends StatefulWidget {
-  const RiderWidget({Key? key}) : super(key: key);
+class ParcelRiderWidget extends StatefulWidget {
+  const ParcelRiderWidget({Key? key}) : super(key: key);
 
   @override
   _RideRequestState createState() => _RideRequestState();
 }
 
-class _RideRequestState extends State<RiderWidget> {
+class _RideRequestState extends State<ParcelRiderWidget> {
   final CallsAndMessagesService _service = CallsAndMessagesService();
   String? riderAddress; // Rider address to display
 
@@ -44,20 +48,20 @@ class _RideRequestState extends State<RiderWidget> {
     LocationProvider locationProvider =
         Provider.of<LocationProvider>(context, listen: false);
 
-    appState.fetchRiderDetails(appState.requestModelFirebase!.userId);
-    if (appState.requestModelFirebase != null) {
+    appState.fetchRiderDetails(appState.parcelRequestModel!.userId);
+    if (appState.parcelRequestModel != null) {
       // Get rider position
       LatLng riderPos = LatLng(
-        appState.requestModelFirebase!.position['latitude'],
-        appState.requestModelFirebase!.position['longitude'],
+        appState.parcelRequestModel!.destinationLatLng?['lat'],
+        appState.parcelRequestModel!.destinationLatLng?['lng'],
       );
       print("Rider position: $riderPos");
 
       // Get destination position
-      var destinationData = appState.requestModelFirebase!.destination;
+
       LatLng destinationPos = LatLng(
-        destinationData['latitude'],
-        destinationData['longitude'],
+        appState.parcelRequestModel!.destinationLatLng?['lat'],
+        appState.parcelRequestModel!.destinationLatLng?['lng'],
       );
       print("Destination position: $destinationPos");
 
@@ -148,7 +152,8 @@ class _RideRequestState extends State<RiderWidget> {
             : Container(
                 decoration: BoxDecoration(
                   color: white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                  borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(border_radius)),
                   boxShadow: [
                     BoxShadow(
                       color: grey,
@@ -255,7 +260,7 @@ class _RideRequestState extends State<RiderWidget> {
 
                           SizedBox(height: 10),
 
-                          // Destination
+                          /// Destination
                           Row(
                             children: [
                               Icon(Icons.location_on,
@@ -275,24 +280,25 @@ class _RideRequestState extends State<RiderWidget> {
 
                           SizedBox(height: Dimensions.paddingSizeSmall),
 
-                          // Price (if available)
+                          /// Price (if available)
                           Row(
                             children: [
                               Icon(Icons.attach_money,
                                   color: Colors.green, size: 18),
-                              SizedBox(width: 10),
-                              // Text(
-                              //   "Price: \$${appState.parcelRequestModel!.distance['value'] ?? 'N/A'}",
-                              //   style: TextStyle(
-                              //       fontSize: 15, fontWeight: FontWeight.bold),
-                              // ),
+                              SizedBox(width: Dimensions.paddingSizeSmall),
+                              Text(
+                                "Price: \Ksh ${appState.parcelRequestModel!.totalPrice}",
+                                style: TextStyle(
+                                    fontSize: Dimensions.fontSizeSmall,
+                                    fontWeight: FontWeight.bold),
+                              ),
                             ],
                           ),
                         ],
                       ),
                     ),
 
-                    // Dynamic Content: Before or During Trip
+                    /// Dynamic Content: Before or During Trip
                     if (appState.onTrip == true) ...[
                       Padding(
                         padding: EdgeInsets.all(12),
@@ -347,7 +353,8 @@ class _RideRequestState extends State<RiderWidget> {
                       ),
 
                       Divider(),
-                      // "Complete Trip" Button
+
+                      /// "Complete Trip" Button
                       Padding(
                         padding: EdgeInsets.all(12),
                         child: ElevatedButton(
@@ -362,12 +369,13 @@ class _RideRequestState extends State<RiderWidget> {
                             locationProvider.clearPolylines();
                             locationProvider.clearMarkers();
                             userProvider.incrementTripCount();
-                            appState.completeTrip(
-                                appState.requestModelFirebase!.id);
+                            appState
+                                .completeTrip(appState.parcelRequestModel!.id);
                             appState.setTripStatus(false);
 
                             appState.show =
                                 Show.IDLE; // Reset state after trip ends
+                            changeScreenReplacement(context, HomePage());
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue,
@@ -381,38 +389,43 @@ class _RideRequestState extends State<RiderWidget> {
                         ),
                       ),
                       SizedBox(
-                        height: Dimensions.paddingSize,
+                        height: Dimensions.paddingSizeExtraSmall,
                       ),
-                      // "Start Trip" Button (Before Trip Starts)
-                      Padding(
-                        padding: EdgeInsets.all(12),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            appState.setRideStatus(false);
-                            appState.setTripStatus(false);
-                            locationProvider.stopTracking();
-                            locationProvider.stopTrip();
-                            locationProvider.clearPolylines();
-                            locationProvider.clearMarkers();
-                            locationProvider.fetchLocation();
-                            appState.cancelRequest(
-                                requestId: appState.requestModelFirebase!.id);
 
-                            appState.show =
-                                Show.IDLE; // Change state to trip mode
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
+                      /// "Start Trip" Button (Before Trip Starts)
+                      SizedBox(
+                        width: double.infinity,
+                        child: Padding(
+                          padding: EdgeInsets.all(12),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              appState.setRideStatus(false);
+                              appState.setTripStatus(false);
+                              locationProvider.stopTracking();
+                              locationProvider.stopTrip();
+                              locationProvider.clearPolylines();
+                              locationProvider.clearMarkers();
+                              locationProvider.fetchLocation();
+                              appState.cancelParcelRequest(
+                                  requestId: appState.parcelRequestModel!.id);
+
+                              changeScreenReplacement(
+                                  context, ParcelTripsScreen());
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: Text("Cancel Trips"),
                           ),
-                          child: Text("Cancel Trip"),
                         ),
                       ),
                     ] else ...[
+                      ///Accept Ride
                       Column(
                         children: [
                           // Accept Ride Button (Only if ride is not accepted)
@@ -423,10 +436,8 @@ class _RideRequestState extends State<RiderWidget> {
                                   width: double.infinity,
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      appState.setRideStatus(true);
-                                      appState.acceptRide();
-                                      appState.handleAccept(
-                                        appState.requestModelFirebase!.id,
+                                      appState.handleParcelAccept(
+                                        appState.parcelRequestModel!.id,
                                         userProvider.userModel!.id,
                                       );
                                       locationProvider
@@ -448,26 +459,31 @@ class _RideRequestState extends State<RiderWidget> {
                           // Confirm Pickup Button (Only if ride is accepted but not started)
                           if (appState.hasAcceptedRide &&
                               !appState.hasArrivedAtLocation)
-                            Padding(
-                              padding: EdgeInsets.all(12),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  print("Arrived At User location ==========");
-                                  appState.handleArrived(
-                                    appState.requestModelFirebase!.id,
-                                    userProvider.userModel!.id,
-                                  );
-                                  appState.hasArrivedAtlocation(true);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppConstants.lightPrimary,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20, vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
+                            SizedBox(
+                              width: double.infinity,
+                              child: Padding(
+                                padding: EdgeInsets.all(12),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    print(
+                                        "Arrived At User location ==========");
+                                    appState.handleParcelArrived(
+                                      appState.parcelRequestModel!.id,
+                                      userProvider.userModel!.id,
+                                    );
+                                    appState.hasArrivedAtlocation(true);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppConstants.lightPrimary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                  ),
+                                  child: Text("Parcel Picked Up"),
                                 ),
-                                child: Text("Rider Picked Up"),
                               ),
                             ),
 
@@ -482,8 +498,8 @@ class _RideRequestState extends State<RiderWidget> {
                                   onPressed: () {
                                     print("Starting Trip==========");
                                     appState.setTripStatus(true);
-                                    appState.startTrip(
-                                        appState.requestModelFirebase!.id,
+                                    appState.startParcelTrip(
+                                        appState.parcelRequestModel!.id,
                                         userProvider.userModel!.id);
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -509,8 +525,9 @@ class _RideRequestState extends State<RiderWidget> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   print("Trip Completed==========");
-                                  appState.completeTrip(
-                                      appState.requestModelFirebase!.id);
+                                  appState.completeParcelTrip(
+                                      appState.parcelRequestModel!.id);
+                                  changeScreenReplacement(context, HomePage());
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.blueAccent,
@@ -524,34 +541,38 @@ class _RideRequestState extends State<RiderWidget> {
                               ),
                             ),
 
-                          SizedBox(height: 16),
+                          SizedBox(height: Dimensions.paddingSizeExtraSmall),
 
                           // Cancel Button (Always Visible)
-                          Padding(
-                            padding: EdgeInsets.all(12),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                appState.cancelRequest(
-                                    requestId:
-                                        appState.requestModelFirebase!.id);
-                                appState.setRideStatus(false);
-                                appState.setTripStatus(false);
-                                locationProvider.stopTracking();
-                                locationProvider.stopTrip();
-                                locationProvider.clearPolylines();
-                                locationProvider.clearMarkers();
-                                locationProvider.animateBackToDriverPosition();
-                                appState.show = Show.IDLE;
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10)),
+                          SizedBox(
+                            width: double.infinity,
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  appState.setRideStatus(false);
+                                  appState.setTripStatus(false);
+                                  locationProvider.stopTracking();
+                                  locationProvider.stopTrip();
+                                  locationProvider.clearPolylines();
+                                  locationProvider.clearMarkers();
+                                  locationProvider
+                                      .animateBackToDriverPosition();
+                                  appState.show = Show.IDLE;
+                                  appState.cancelParcelRequest(
+                                      requestId:
+                                          appState.parcelRequestModel!.id);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                ),
+                                child: Text("Cancel"),
                               ),
-                              child: Text("Cancel Trip"),
                             ),
                           ),
                         ],

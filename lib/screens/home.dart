@@ -18,8 +18,8 @@ import 'trips/rider_draggable.dart';
 GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: GOOGLE_MAPS_API_KEY);
 
 class HomePage extends StatefulWidget {
-  HomePage({super.key, required this.title});
-  final String title;
+  HomePage({super.key});
+
   //final RequestModelFirebase request;
 
   @override
@@ -33,7 +33,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _updatePosition();
-    _hideSystemUI();
+
+    _restoreSystemUI();
   }
 
   @override
@@ -41,9 +42,8 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  void _hideSystemUI() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-        overlays: [SystemUiOverlay.top]);
+  void _restoreSystemUI() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge); // Restore UI
   }
 
   _updatePosition() async {

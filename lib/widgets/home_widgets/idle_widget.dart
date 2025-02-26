@@ -100,7 +100,6 @@ class _IdleWidgetState extends State<IdleWidget> with TickerProviderStateMixin {
                     ),
                   ),
                   RadarAnimation(),
-                  SizedBox(height: 15),
                 ],
               ),
             ),
