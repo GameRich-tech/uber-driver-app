@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:Bucoride_Driver/helpers/constants.dart';
+import 'package:Bucoride_Driver/screens/Paywall/Paywall.dart';
+import 'package:Bucoride_Driver/screens/home.dart';
 import 'package:Bucoride_Driver/services/parcel_request.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -13,6 +15,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../helpers/screen_navigation.dart';
 import '../helpers/style.dart';
 import '../models/parcel_request.dart';
 import '../models/ride_Request.dart';
@@ -26,12 +29,8 @@ import '../utils/dimensions.dart';
 enum Show { IDLE, RIDER, TRIP, INSPECTROUTE, COMPLETETRIP }
 
 class AppStateProvider with ChangeNotifier {
-  static const ACCEPTED = 'ACCEPTED';
-  static const CANCELLED = 'CANCELLED';
-  static const PENDING = 'PENDING';
-  static const EXPIRED = 'EXPIRED';
+  /// constants
 
-  static const CURRENT_LOCATION = 'CURRENT_LOCATION';
   // ANCHOR: VARIABLES DEFINITION
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
@@ -88,6 +87,7 @@ class AppStateProvider with ChangeNotifier {
   RequestModelFirebase? requestModelFirebase;
   RiderModel? riderModel;
   ParcelRequestModel? parcelRequestModel;
+  RequestModelFirebase? activeRequest;
 
   List<RequestModelFirebase> pendingTrips = [];
   List<RiderModel> pendingTrip = [];
@@ -95,16 +95,17 @@ class AppStateProvider with ChangeNotifier {
   late double distanceFromRider = 0;
   late double totalRideDistance = 0;
   late StreamSubscription<QuerySnapshot> requestStream;
+  late StreamSubscription<DocumentSnapshot<Object?>> paymentStream;
   late int timeCounter = 0;
   late double percentage = 0;
   late Timer periodicTimer;
+  late Timer _paymentTimer;
   RideRequestServices _requestServices = RideRequestServices();
   ParcelRequestServices _parcelRequestServices = ParcelRequestServices();
   late Show show = Show.IDLE;
 
   @override
   void dispose() {
-    // TODO: implement dispose
     _requestCountController.close();
     requestStreamSubscription.cancel();
     super.dispose();
@@ -112,8 +113,43 @@ class AppStateProvider with ChangeNotifier {
 
   AppStateProvider() {
     _enableNotifications();
-
+    _notificationsHandler();
     saveDeviceToken();
+  }
+
+  void _notificationsHandler() {
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print("📂 Notification Clicked: ${message.notification?.title}");
+      //_handleRideRequest( context, message);
+    });
+  }
+
+  void _handleRideRequest(BuildContext context, RemoteMessage message) {
+    if (message.data['type'] == "RIDE_REQUEST") {
+      hasNewRideRequest = true;
+
+      // Extract ride request details
+      Map<String, dynamic> requestData = {
+        "username": message.data['username'],
+        "destination": message.data['destination'],
+        "distance_text": message.data['distance_text'],
+        "distance_value": int.parse(message.data['distance_value']),
+        "destination_latitude":
+            double.parse(message.data['destination_latitude']),
+        "destination_longitude":
+            double.parse(message.data['destination_longitude']),
+        "user_latitude": double.parse(message.data['user_latitude']),
+        "user_longitude": double.parse(message.data['user_longitude']),
+        "id": message.data['id'],
+        "userId": message.data['userId'],
+      };
+
+      // // Navigate to the ride request screen
+      // navigatorKey.currentState?.push(MaterialPageRoute(
+      //   builder: (context) => ViewTrip(request: requestData),
+      // ));
+      changeScreen(context, HomePage());
+    }
   }
 
   void acceptRide() {
@@ -408,7 +444,65 @@ class AppStateProvider with ChangeNotifier {
     return R * c; // Distance in km
   }
 
-  RequestModelFirebase? activeRequest;
+  Future<void> paymentRequest(BuildContext context, String userId) async {
+    print("====== Listening To Payments ======");
+
+    if (userId.isEmpty) return;
+
+    // Listen to Firestore for 'hasVehicle' updates
+    paymentStream = FirebaseFirestore.instance
+        .collection("drivers")
+        .doc(userId)
+        .snapshots()
+        .listen((snapshot) async {
+      if (snapshot.exists) {
+        // ✅ Cast snapshot data to Map<String, dynamic>
+        final data = snapshot.data();
+
+        if (data != null && data['hasVehicle'] == true) {
+          print("✅ Payment confirmed: Navigating to menu...");
+
+          // Set next payment date (e.g., 30 days from today)
+          DateTime nextPaymentDate = DateTime.now().add(Duration(days: 30));
+
+          // Update Firestore
+          await FirebaseFirestore.instance
+              .collection("drivers")
+              .doc(userId)
+              .update({
+            "nextPaymentDate": Timestamp.fromDate(nextPaymentDate)
+          }); // ✅ Store as Timestamp
+
+          print("📅 Next payment date updated: $nextPaymentDate");
+
+          changeScreenReplacement(
+              context,
+              PaymentResultScreen(
+                  isSuccess: true,
+                  message: "Thank you. Your payment was received."));
+          _stopPaymentStream(context);
+        }
+      }
+    });
+    _paymentTimer = Timer(Duration(minutes: 5), _stopPaymentStream(context));
+  }
+
+  // Function to stop the stream
+  _stopPaymentStream(BuildContext context) {
+    if (paymentStream != null) {
+      paymentStream!.cancel();
+
+      print("⏹️ Payment stream stopped.");
+    }
+
+    if (_paymentTimer != null) {
+      _paymentTimer!.cancel();
+    }
+    changeScreenReplacement(
+        context,
+        PaymentResultScreen(
+            isSuccess: false, message: "Your payment failed. try again"));
+  }
 
   Future<void> initialiseRequests() async {
     print("======Initialise Requests======");
@@ -426,6 +520,15 @@ class AppStateProvider with ChangeNotifier {
                 requestData['position'].containsKey('longitude')) {
               double pickupLat = requestData['position']['latitude'];
               double pickupLng = requestData['position']['longitude'];
+
+              String requestVehicleType =
+                  requestData['type']; // Requested vehicle type
+
+              // ✅ Check if the driver’s vehicle type matches the requested type
+              if (VEHICLE_TYPE != requestVehicleType) {
+                print("❌ Skipping request. Vehicle type mismatch.");
+                continue; // Skip this request
+              }
 
               // Fetch Driver's Current Location
               Position driverPosition = await Geolocator.getCurrentPosition(
@@ -684,8 +787,9 @@ class AppStateProvider with ChangeNotifier {
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.cancel, color: Colors.white, size: 28), // Cancel icon
-            SizedBox(width: 10),
+            Icon(Icons.question_mark,
+                color: Colors.white, size: 28), // Cancel icon
+            SizedBox(width: Dimensions.paddingSizeSmall),
             Expanded(
               child: Text(
                 content,
@@ -700,7 +804,7 @@ class AppStateProvider with ChangeNotifier {
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: Duration(seconds: 4), // Snackbar lasts for 4 seconds
+        duration: Duration(seconds: 4), // Snack bar lasts for 4 seconds
       ),
     );
   }

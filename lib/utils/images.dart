@@ -66,7 +66,7 @@ class Images {
   static const String parcelDeliveryman = 'assets/image/parcel_deliveryman.png';
   static const String distanceCalculated =
       'assets/image/distance_calculated_icon.png';
-      
+
   static const String parcelDetails = 'assets/image/parcel_details.png';
   static const String pickLocation = 'assets/image/pick_location.png';
   static const String addLocation = 'assets/image/add_location.png';
@@ -171,6 +171,8 @@ class Images {
       'assets/image/traffic_online_icon.png';
   static const String microPhoneIcon = 'assets/image/micro_phone_icon.png';
   static const String newBidFareIcon = 'assets/image/new_bid_fare_icon.png';
+
+  static const String mpesaIcon = 'assets/image/mpesa_logo.png';
 
   //svg
 

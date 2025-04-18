@@ -19,8 +19,6 @@ class TripDetails extends StatefulWidget {
 }
 
 class _TripDetailsState extends State<TripDetails> {
-  Set<Marker> _markers = {};
-
   Map<String, dynamic> get trips => widget.trip;
 
   @override
@@ -44,8 +42,8 @@ class _TripDetailsState extends State<TripDetails> {
     LatLng riderPosition = LatLng(pickuplat, pickuplng);
     LatLng destinationPosition = LatLng(destinationlat, destinationlng);
 
-    locationProvider.addRiderLocationMarker(riderPosition);
-    locationProvider.addRiderLocationMarker(destinationPosition);
+    locationProvider.addRiderStartLocationMarker(riderPosition);
+    locationProvider.addRiderStopLocationMarker(destinationPosition);
     locationProvider.addRiderRoutePolyline(riderPosition, destinationPosition);
 
     LatLngBounds bounds = LatLngBounds(
@@ -214,7 +212,7 @@ class _TripDetailsState extends State<TripDetails> {
             mapType: MapType.normal,
             tiltGesturesEnabled: false,
             compassEnabled: true,
-            markers: _markers,
+            markers: locationProvider.markers,
             onCameraMove: locationProvider.onCameraMove,
             polylines: _polylines,
           ),

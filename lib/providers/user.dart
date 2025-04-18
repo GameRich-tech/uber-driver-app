@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:Bucoride_Driver/helpers/constants.dart';
+import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
+import 'package:Bucoride_Driver/screens/Paywall/Paywall.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -9,6 +12,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/credentials.dart';
 import '../models/ride_Request.dart';
 import '../models/user.dart';
 import '../services/user.dart';
@@ -36,16 +40,34 @@ class UserProvider with ChangeNotifier {
   User? get user => _user;
   bool get isActiveRememberMe => _isActiveRememberMe;
 
-  // Text controllers for input
+  /// Text controllers for input
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
   final TextEditingController name = TextEditingController();
   final TextEditingController phone = TextEditingController();
   final TextEditingController identification = TextEditingController();
   final TextEditingController otpController = TextEditingController();
+
+  //Vehicle Registration
+  final TextEditingController modelController = TextEditingController();
+  final TextEditingController mpesaNumberController = TextEditingController();
+  final TextEditingController brandController = TextEditingController();
+  final TextEditingController weightCapacityController =
+      TextEditingController();
+  final TextEditingController licensePlateController = TextEditingController();
+  final TextEditingController expiryDateController = TextEditingController();
+  final TextEditingController fuelTypeController =
+      TextEditingController(text: "Petrol");
+  final TextEditingController vehicleTypeController =
+      TextEditingController(text: "Sedan");
+
   List<RequestModelFirebase> _trips = [];
   List<RequestModelFirebase> get trips => _trips;
   File? profileImage;
+
+  ///Booleans
+  bool _isOnline = false;
+  bool get isOnline => _isOnline;
 
   UserProvider() {
     _initialize();
@@ -68,6 +90,27 @@ class UserProvider with ChangeNotifier {
   }
 
   get isRememberMe => false;
+
+  ///Get Mpesa Credentials
+  Future<Credentials?> getCredentials() async {
+    try {
+      DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
+          .instance
+          .collection('credentials')
+          .doc('mpesa')
+          .get();
+
+      if (snapshot.exists) {
+        return Credentials.fromFirestore(snapshot);
+      } else {
+        print("⚠️ No credentials found in Firestore.");
+        return null;
+      }
+    } catch (e) {
+      print("❌ Error fetching credentials: $e");
+      return null;
+    }
+  }
 
   /// Sign-in method
   Future<String> signIn() async {
@@ -434,6 +477,27 @@ class UserProvider with ChangeNotifier {
     }
   }
 
+  void setOnlineStatus(bool status) async {
+    _isOnline = status;
+    notifyListeners();
+
+    // Update Firestore
+    await _userServices.setOnlineStatus(userModel!.id, status);
+  }
+
+  void fetchOnlineStatus() async {
+    _isOnline = await _userServices.getOnlineStatus(userModel!.id);
+    notifyListeners();
+  }
+
+  void fetchMpesaCredentials() async {
+    Credentials? creds = await getCredentials();
+    if (creds != null) {
+      print("✅ Consumer Key: ${creds.consumerKey}");
+      print("✅ Consumer Secret: ${creds.consumerSecret}");
+    }
+  }
+
   /// Initialize user status and preferences
   Future<void> _initialize() async {
     _status = Status.Authenticating;
@@ -448,6 +512,8 @@ class UserProvider with ChangeNotifier {
       String? userId = prefs.getString(ID);
       if (userId != null) {
         _userModel = await _userServices.getUserById(userId);
+        VEHICLE_TYPE = _userModel!.vehicleType;
+        fetchMpesaCredentials();
         _user = _auth.currentUser;
         _status = Status.Authenticated;
       } else {
@@ -465,6 +531,64 @@ class UserProvider with ChangeNotifier {
     await prefs.setBool(LOGGED_IN, true);
     await prefs.setString(ID, user.uid);
     await _secureStorage.write(key: 'user_email', value: user.email);
+  }
+
+  Future<void> checkSubscriptionStatus(BuildContext context) async {
+    DocumentSnapshot snapshot = await FirebaseFirestore.instance
+        .collection("drivers")
+        .doc(_user?.uid)
+        .get();
+
+    if (snapshot.exists) {
+      final user = UserModel.fromSnapshot(snapshot);
+
+      if (user.nextPaymentDate != null) {
+        DateTime? nextPaymentDate;
+
+        if (user.nextPaymentDate is Timestamp) {
+          nextPaymentDate = (user.nextPaymentDate as Timestamp).toDate();
+        } else {
+          nextPaymentDate = user.nextPaymentDate;
+        }
+
+        if (nextPaymentDate != null &&
+            DateTime.now().isAfter(nextPaymentDate)) {
+          // ✅ Subscription expired
+          await FirebaseFirestore.instance
+              .collection("drivers")
+              .doc(_user?.uid)
+              .update({"hasVehicle": false}); // Reset hasVehicle
+
+          showSubscriptionExpiredDialog(context);
+        }
+      }
+    }
+  }
+
+  void showSubscriptionExpiredDialog(BuildContext context) {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Subscription Expired"),
+          content: Text(
+              "Your subscription has expired. Please renew to continue using the service."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                changeScreen(
+                    context,
+                    Paywall(
+                      isRenewal: true,
+                    ));
+              },
+              child: Text("Renew Now"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   /// Clear user data from preferences

@@ -58,6 +58,11 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
 
   void _hideSystemUI() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // Make status bar fully transparent
+      statusBarIconBrightness:
+          Brightness.light, // Change icons to light if needed
+    ));
   }
 
   @override
@@ -74,15 +79,8 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
       isConnected = result.contains(ConnectivityResult.mobile) ||
           result.contains(ConnectivityResult.wifi);
 
-      // Remove existing SnackBar if Get.context is not null
-      final context = Get.context;
-      if (context != null) {
-        final scaffoldMessenger = ScaffoldMessenger.of(context);
-        scaffoldMessenger.removeCurrentSnackBar();
-        scaffoldMessenger.hideCurrentSnackBar();
-      }
       // Show updated SnackBar
-      ScaffoldMessenger.of(context!).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: isConnected ? Colors.green : Colors.red,
           duration: Duration(seconds: isConnected ? 3 : 6000),
@@ -155,7 +153,7 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
                                   ((120 *
                                       double.tryParse(
                                           _animation.value.toString())!))),
-                          child: Image.asset(Images.logoWithName, width: 50),
+                          child: Image.asset(Images.logoWithName, width: 100),
                         ),
                       ),
                       const SizedBox(height: Dimensions.paddingSizeExtraLarge),

@@ -26,10 +26,21 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseAppCheck.instance.activate(
-    //webProvider: ReCaptchaV3Provider('your-recaptcha-key'), // For Web
-    androidProvider: AndroidProvider.playIntegrity, // For Android
-    //appleProvider: AppleProvider.deviceCheck, // For iOS
+    androidProvider:
+        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    //appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
   );
+  //debugToken: 45d13be1-c481-4b69-89f8-3763b80bdf90
+  // Wait a bit before requesting the token to avoid race conditions
+  await Future.delayed(Duration(seconds: 2));
+
+  try {
+    String? appCheckToken = await FirebaseAppCheck.instance.getToken(true);
+    debugPrint("🔥 Firebase App Check Debug Token: $appCheckToken");
+  } catch (e) {
+    debugPrint("❌ Error fetching App Check token: $e");
+  }
+
 
   FirebaseApi firebaseApi = FirebaseApi();
   await firebaseApi.initNotifications();

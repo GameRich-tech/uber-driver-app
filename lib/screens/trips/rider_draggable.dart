@@ -26,10 +26,11 @@ class RiderWidget extends StatefulWidget {
 class _RideRequestState extends State<RiderWidget> {
   final CallsAndMessagesService _service = CallsAndMessagesService();
   String? riderAddress; // Rider address to display
-
+  bool _gotTrip = false;
   @override
   void initState() {
     super.initState();
+    _gotTrip = false;
     // Fetch the rider's address on widget load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchRiderAddress();
@@ -93,6 +94,7 @@ class _RideRequestState extends State<RiderWidget> {
 
         // Create polyline for the journey
         locationProvider.createJourneyPolyline(driverPos, riderPos);
+        locationProvider.addCustomParcelDestinationMarker(destinationPos);
 
         // Calculate bounds for camera zoom
         LatLngBounds bounds = LatLngBounds(
@@ -133,8 +135,10 @@ class _RideRequestState extends State<RiderWidget> {
     if (appState.riderModel == null) {
       return LoadingLocationScreen();
     }
-
-    print(appState.riderModel);
+    if (appState.onTrip == true && _gotTrip == false) {
+      locationProvider.updateTripInfo();
+      _gotTrip = true;
+    }
 
     return DraggableScrollableSheet(
       initialChildSize: 0.4,
@@ -187,8 +191,7 @@ class _RideRequestState extends State<RiderWidget> {
                                     ? NetworkImage(appState.riderModel!.photo!)
                                     : AssetImage(Images.person)
                                         as ImageProvider,
-                                child: (appState.riderModel!.photo != null &&
-                                        appState.riderModel!.photo!.isNotEmpty)
+                                child: (appState.riderModel!.photo.isNotEmpty)
                                     ? null
                                     : Icon(Icons.person_outline, size: 25),
                               ),
@@ -198,7 +201,7 @@ class _RideRequestState extends State<RiderWidget> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      appState.riderModel!.name ?? 'Loading...',
+                                      appState.riderModel!.name,
                                       style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w600),
@@ -209,8 +212,7 @@ class _RideRequestState extends State<RiderWidget> {
                                             color: Colors.green, size: 16),
                                         SizedBox(width: 5),
                                         Text(
-                                          appState.riderModel!.phone ??
-                                              "No phone number",
+                                          appState.riderModel!.phone,
                                           style: TextStyle(
                                               fontSize: 14,
                                               color: Colors.grey[700]),
@@ -223,9 +225,7 @@ class _RideRequestState extends State<RiderWidget> {
                               IconButton(
                                 icon: Icon(Icons.call, color: Colors.green),
                                 onPressed: () {
-                                  if (appState.riderModel!.phone != null) {
-                                    _service.call(appState.riderModel!.phone);
-                                  }
+                                  _service.call(appState.riderModel!.phone);
                                 },
                               ),
                             ],
@@ -253,7 +253,7 @@ class _RideRequestState extends State<RiderWidget> {
                             ],
                           ),
 
-                          SizedBox(height: 10),
+                          SizedBox(height: Dimensions.paddingSizeSmall),
 
                           // Destination
                           Row(
@@ -263,8 +263,7 @@ class _RideRequestState extends State<RiderWidget> {
                               SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  appState.parcelRequestModel!.destination ??
-                                      'Loading...',
+                                  "${appState.requestModelFirebase?.destination['address']}",
                                   style: TextStyle(fontSize: 14),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
@@ -281,11 +280,11 @@ class _RideRequestState extends State<RiderWidget> {
                               Icon(Icons.attach_money,
                                   color: Colors.green, size: 18),
                               SizedBox(width: 10),
-                              // Text(
-                              //   "Price: \$${appState.parcelRequestModel!.distance['value'] ?? 'N/A'}",
-                              //   style: TextStyle(
-                              //       fontSize: 15, fontWeight: FontWeight.bold),
-                              // ),
+                              Text(
+                                "Price: \ksh${appState.requestModelFirebase!.distance['value'] ?? 'N/A'}",
+                                style: TextStyle(
+                                    fontSize: Dimensions.fontSizeSmall, fontWeight: FontWeight.bold),
+                              ),
                             ],
                           ),
                         ],
@@ -302,7 +301,7 @@ class _RideRequestState extends State<RiderWidget> {
                             Text(
                               "Trip in Progress",
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: Dimensions.fontSizeDefault,
                                 fontWeight: FontWeight.bold,
                                 color: AppConstants.darkPrimary,
                               ),
@@ -316,9 +315,10 @@ class _RideRequestState extends State<RiderWidget> {
                                   children: [
                                     Text("Distance Remaining:",
                                         style: TextStyle(
-                                            fontSize: 16, color: Colors.grey)),
+                                            fontSize: Dimensions.fontSizeSmall,
+                                            color: Colors.grey)),
                                     Text(
-                                      "${locationProvider.remainingDistance ?? 'Loading...'}",
+                                      "${locationProvider.remainingDistance}",
                                       style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold),
@@ -330,7 +330,8 @@ class _RideRequestState extends State<RiderWidget> {
                                   children: [
                                     Text("ETA:",
                                         style: TextStyle(
-                                            fontSize: 16, color: Colors.grey)),
+                                            fontSize: Dimensions.fontSizeSmall,
+                                            color: Colors.grey)),
                                     Text(
                                       locationProvider
                                           .eta, // Fetch from API later
@@ -448,26 +449,31 @@ class _RideRequestState extends State<RiderWidget> {
                           // Confirm Pickup Button (Only if ride is accepted but not started)
                           if (appState.hasAcceptedRide &&
                               !appState.hasArrivedAtLocation)
-                            Padding(
-                              padding: EdgeInsets.all(12),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  print("Arrived At User location ==========");
-                                  appState.handleArrived(
-                                    appState.requestModelFirebase!.id,
-                                    userProvider.userModel!.id,
-                                  );
-                                  appState.hasArrivedAtlocation(true);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppConstants.lightPrimary,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20, vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
+                            SizedBox(
+                              width: double.infinity,
+                              child: Padding(
+                                padding: EdgeInsets.all(12),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    print(
+                                        "Arrived At User location ==========");
+                                    appState.handleArrived(
+                                      appState.requestModelFirebase!.id,
+                                      userProvider.userModel!.id,
+                                    );
+                                    appState.hasArrivedAtlocation(true);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppConstants.lightPrimary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                  ),
+                                  child: Text("Rider Picked Up"),
                                 ),
-                                child: Text("Rider Picked Up"),
                               ),
                             ),
 
@@ -524,34 +530,38 @@ class _RideRequestState extends State<RiderWidget> {
                               ),
                             ),
 
-                          SizedBox(height: 16),
+                          SizedBox(height: Dimensions.paddingSize),
 
-                          // Cancel Button (Always Visible)
-                          Padding(
-                            padding: EdgeInsets.all(12),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                appState.cancelRequest(
-                                    requestId:
-                                        appState.requestModelFirebase!.id);
-                                appState.setRideStatus(false);
-                                appState.setTripStatus(false);
-                                locationProvider.stopTracking();
-                                locationProvider.stopTrip();
-                                locationProvider.clearPolylines();
-                                locationProvider.clearMarkers();
-                                locationProvider.animateBackToDriverPosition();
-                                appState.show = Show.IDLE;
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10)),
+                          /// Cancel Button (Always Visible)
+                          SizedBox(
+                            width: double.infinity,
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  appState.cancelRequest(
+                                      requestId:
+                                          appState.requestModelFirebase!.id);
+                                  appState.setRideStatus(false);
+                                  appState.setTripStatus(false);
+                                  locationProvider.stopTracking();
+                                  locationProvider.stopTrip();
+                                  locationProvider.clearPolylines();
+                                  locationProvider.clearMarkers();
+                                  locationProvider
+                                      .animateBackToDriverPosition();
+                                  appState.show = Show.IDLE;
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                ),
+                                child: Text("Cancel Trip"),
                               ),
-                              child: Text("Cancel Trip"),
                             ),
                           ),
                         ],

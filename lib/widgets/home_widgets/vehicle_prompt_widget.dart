@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/user.dart';
-import '../../screens/add_vehicle_page.dart';
+import '../../screens/vehicle_registration/add_vehicle_page.dart';
 import '../loading.dart';
 
 class VehiclePromptWidget extends StatefulWidget {

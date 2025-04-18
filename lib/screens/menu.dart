@@ -1,11 +1,12 @@
 import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
 import 'package:Bucoride_Driver/models/ride_Request.dart';
-import 'package:Bucoride_Driver/screens/add_vehicle_page.dart';
 import 'package:Bucoride_Driver/screens/home.dart';
 import 'package:Bucoride_Driver/screens/parcels/parcel_trips.dart';
 import 'package:Bucoride_Driver/screens/trips/available_trips.dart';
+import 'package:Bucoride_Driver/screens/vehicle_registration/add_vehicle_page.dart';
 import 'package:Bucoride_Driver/services/ride_request.dart';
 import 'package:Bucoride_Driver/utils/images.dart';
+import 'package:Bucoride_Driver/widgets/app_bar/app_bar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -61,15 +62,27 @@ class _MenuState extends State<Menu> {
         Provider.of<AppStateProvider>(context, listen: false)
             .initialiseRequests();
         appState.clearRequests();
+
+        /// Get the Online status
+        userProvider.fetchOnlineStatus();
+
+        ///Refresh the userModel
+        userProvider.reloadUserModel();
       } else {
-        showAddVehicleSheet(); // Show alert if vehicle is not added
+        ///Refresh the userModel
+        userProvider.reloadUserModel();
+        if (userProvider.userModel?.nextPaymentDate == null) {
+          showAddVehicleSheet();
+        }
+        // Show alert if vehicle is not added
       }
     });
     _restoreSystemUI();
   }
 
   void _restoreSystemUI() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge); // Restore UI
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+        overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
   }
 
   int _selectedIndex = 0;
@@ -137,7 +150,7 @@ class _MenuState extends State<Menu> {
                         ),
                       ),
                     ),
-                    Icon(Icons.directions_car, size: 60, color: Colors.blue),
+                    Image.asset(Images.car, width: 60, height: 60),
                     SizedBox(height: 10),
                     Text(
                       "Add Your Vehicle",
@@ -153,29 +166,35 @@ class _MenuState extends State<Menu> {
                         style: TextStyle(fontSize: 16, color: Colors.black54),
                       ),
                     ),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Close sheet
-                        // Navigate to the vehicle registration screen
-                        changeScreen(context, AddVehiclePage());
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    SizedBox(height: Dimensions.paddingSize),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close sheet
+                          // Navigate to the vehicle registration screen
+                          changeScreen(context, AddVehiclePage());
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 30),
                         ),
-                        padding:
-                            EdgeInsets.symmetric(vertical: 14, horizontal: 30),
+                        child:
+                            Text("Add Vehicle", style: TextStyle(fontSize: 16)),
                       ),
-                      child:
-                          Text("Add Vehicle", style: TextStyle(fontSize: 16)),
                     ),
-                    SizedBox(height: 10),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context), // Just close
-                      child:
-                          Text("Cancel", style: TextStyle(color: Colors.red)),
+                    SizedBox(height: Dimensions.paddingSizeSmall),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context), // Just close
+                        child:
+                            Text("Cancel", style: TextStyle(color: Colors.red)),
+                      ),
                     ),
                   ],
                 ),
@@ -325,6 +344,7 @@ class _MenuState extends State<Menu> {
 
     var requestCount = appState.numberOfRequests;
     return Scaffold(
+      appBar: CustomAppBar(title: "", showNavBack: false, centerTitle: false),
       body: Stack(
         children: [
           SafeArea(
@@ -332,6 +352,8 @@ class _MenuState extends State<Menu> {
           ),
         ],
       ),
+
+      ///Request floating button
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(
             bottom: 20.0), // Adjust the bottom padding to raise the FAB
@@ -416,6 +438,7 @@ class _MenuState extends State<Menu> {
           ],
         ),
       ),
+
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: CustomBottomNavBar(onItemSelected: (index) {
         print("Bottom nav selected: $index");

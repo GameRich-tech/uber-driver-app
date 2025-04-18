@@ -20,8 +20,6 @@ GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: GOOGLE_MAPS_API_KEY);
 class HomePage extends StatefulWidget {
   HomePage({super.key});
 
-  //final RequestModelFirebase request;
-
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -43,7 +41,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _restoreSystemUI() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge); // Restore UI
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+        overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
   }
 
   _updatePosition() async {

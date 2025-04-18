@@ -47,4 +47,27 @@ class UserServices {
       firestore.collection(collection).doc(id).get().then((doc) {
         return UserModel.fromSnapshot(doc);
       });
+
+  /// Set the driver Online Status
+  Future<void> setOnlineStatus(String userId, bool isOnline) async {
+    try {
+      await firestore.collection(collection).doc(userId).update({
+        'isOnline': isOnline,
+      });
+    } catch (e) {
+      print("Error updating online status: $e");
+    }
+  }
+
+  /// Get the driver Online Status
+  Future<bool> getOnlineStatus(String userId) async {
+    try {
+      DocumentSnapshot doc =
+          await firestore.collection(collection).doc(userId).get();
+      return doc.exists ? doc['isOnline'] ?? false : false;
+    } catch (e) {
+      print("Error fetching online status: $e");
+      return false;
+    }
+  }
 }

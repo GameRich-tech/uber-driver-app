@@ -64,32 +64,7 @@ class FirebaseApi {
     }
   }
 
-  void _handleRideRequest(RemoteMessage message) {
-    if (message.data['type'] == "RIDE_REQUEST") {
-      hasNewRideRequest = true;
-
-      // Extract ride request details
-      Map<String, dynamic> requestData = {
-        "username": message.data['username'],
-        "destination": message.data['destination'],
-        "distance_text": message.data['distance_text'],
-        "distance_value": int.parse(message.data['distance_value']),
-        "destination_latitude":
-            double.parse(message.data['destination_latitude']),
-        "destination_longitude":
-            double.parse(message.data['destination_longitude']),
-        "user_latitude": double.parse(message.data['user_latitude']),
-        "user_longitude": double.parse(message.data['user_longitude']),
-        "id": message.data['id'],
-        "userId": message.data['userId'],
-      };
-
-      // Navigate to the ride request screen
-      navigatorKey.currentState?.push(MaterialPageRoute(
-        builder: (context) => ViewTrip(request: requestData),
-      ));
-    }
-  }
+ 
 
   Future<void> _showNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =

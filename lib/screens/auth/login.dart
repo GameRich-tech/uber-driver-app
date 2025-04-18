@@ -76,8 +76,9 @@ class _LoginScreenState extends State<LoginScreen>
                             children: [
                               Column(
                                 children: [
+                                  const SizedBox(height: Dimensions.paddingSizeExtraLarge),
                                   Image.asset(Images.logoWithName, height: 75),
-                                  const SizedBox(height: 8.0),
+                                  const SizedBox(height: Dimensions.paddingSize),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -196,8 +197,10 @@ class _LoginScreenState extends State<LoginScreen>
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
+        style: TextStyle(fontSize: Dimensions.fontSizeSmall),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(fontSize: Dimensions.fontSizeSmall),
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
@@ -243,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen>
           style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: Dimensions.fontSizeLarge),
+              fontSize: Dimensions.fontSizeSmall),
         ),
       ),
     );
@@ -277,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen>
         child: Text(
           'OTP Login'.tr,
           style: TextStyle(
-              fontWeight: FontWeight.bold, fontSize: Dimensions.fontSizeLarge),
+              fontWeight: FontWeight.bold, fontSize: Dimensions.fontSizeSmall),
         ),
       ),
     );

@@ -29,7 +29,7 @@ class _TripHistoryState extends State<TripHistory> {
   ];
   @override
   void initState() {
-    // TODO: implement initState
+    
     super.initState();
     Provider.of<UserProvider>(context, listen: false).reloadUserModel();
   }
@@ -41,7 +41,7 @@ class _TripHistoryState extends State<TripHistory> {
 
     return Scaffold(
         appBar: CustomAppBar(
-            title: "Trip History", showNavBack: false, centerTitle: false),
+            title: "Trip History", showNavBack: false, centerTitle: true),
         body: RefreshIndicator(
           child: Column(
             children: [
@@ -213,7 +213,7 @@ class _TripHistoryState extends State<TripHistory> {
                                     style: TextStyle(color: Colors.grey[600]),
                                   ),
                                   Text(
-                                    "Fare: \ ksh ${trip['distance']['value'] ?? '0'}",
+                                    "Fare: \ ksh ${trip['distance']['value'].toInt() ?? '0'}",
                                     style: TextStyle(
                                         color: Colors.black,
                                         fontWeight: FontWeight.bold),

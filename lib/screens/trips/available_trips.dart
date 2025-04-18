@@ -1,5 +1,6 @@
 import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
 import 'package:Bucoride_Driver/screens/home.dart';
+import 'package:Bucoride_Driver/widgets/app_bar/app_bar.dart';
 import 'package:Bucoride_Driver/widgets/loading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,8 @@ class _TripScreenState extends State<TripScreen> {
         Provider.of<AppStateProvider>(context, listen: false);
 
     return Scaffold(
+      appBar:
+          CustomAppBar(title: "Requests", showNavBack: true, centerTitle: true),
       body: StreamBuilder<QuerySnapshot>(
         stream: _requestServices.requestStream(),
         builder: (context, snapshot) {

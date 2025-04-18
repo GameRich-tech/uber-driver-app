@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:Bucoride_Driver/services/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/constants.dart';
 import '../utils/images.dart';
@@ -14,6 +16,9 @@ class LocationProvider with ChangeNotifier {
   static const String LOCATION_MARKER = "locationMarker";
   static const DESTINATION_MARKER_ID = 'destination';
 
+  /// Services
+  UserServices _userServices = UserServices();
+  
   GoogleMapController? _mapController;
 
   // LIST OBJECTS
@@ -100,6 +105,7 @@ class LocationProvider with ChangeNotifier {
         }
       }
       _currentPosition = await Geolocator.getCurrentPosition();
+      _userCurrentLocationUpdate();
       print("📍 My Position: $_currentPosition");
     } catch (e) {
       print('❌ Error fetching location: $e');
@@ -132,11 +138,36 @@ class LocationProvider with ChangeNotifier {
         });
 
         updateTripInfo();
+        _userCurrentLocationUpdate();
       }
 
       notifyListeners();
     });
   }
+
+  // ANCHOR LOCATION METHODS
+  void _userCurrentLocationUpdate() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Provide fallback value for latitude and longitude
+    double latitude = prefs.getDouble('lat') ?? 0.0;
+    double longitude = prefs.getDouble('lng') ?? 0.0;
+
+    double distance = await Geolocator.distanceBetween(latitude, longitude,
+        currentPosition!.latitude, currentPosition!.longitude);
+
+    Map<String, dynamic> values = {
+      "id": prefs.getString("id"),
+      "position": currentPosition!.toJson()
+    };
+
+    if (distance >= 50) {
+      
+      _userServices.updateUserData(values);
+      await prefs.setDouble('lat', currentPosition!.latitude);
+      await prefs.setDouble('lng', currentPosition!.longitude);
+    }
+  }
+
 
   //Trip Info
   Future<void> updateTripInfo() async {
@@ -206,27 +237,65 @@ class LocationProvider with ChangeNotifier {
 
   // ✅ Add Marker for Current Location
   void _addCurrentLocationMarker(Position position) {
-    clearMarkers();
-    final marker = Marker(
-      markerId: MarkerId(LOCATION_MARKER),
-      position: LatLng(position.latitude, position.longitude),
-      infoWindow: InfoWindow(title: 'You Are Here'),
-      icon: markerIcon,
-    );
+    final LatLng newPosition = LatLng(position.latitude, position.longitude);
 
-    _markers
-      ..removeWhere(
-          (m) => m.markerId.value == 'current_location') // Remove old marker
-      ..add(marker); // Add new marker
+    // Check if marker already exists
+    if (_markers.any((m) => m.markerId.value == LOCATION_MARKER)) {
+      // Update only the position of the existing marker
+      _markers = _markers.map((m) {
+        if (m.markerId.value == LOCATION_MARKER) {
+          return Marker(
+            markerId: m.markerId,
+            position: newPosition, // Just update position
+            infoWindow: m.infoWindow,
+            icon: m.icon,
+          );
+        }
+        return m;
+      }).toSet();
+    } else {
+      // If marker does not exist, add it
+      _markers.add(Marker(
+        markerId: MarkerId(LOCATION_MARKER),
+        position: newPosition,
+        infoWindow: InfoWindow(title: 'You Are Here'),
+        icon: markerIcon,
+      ));
+    }
 
     notifyListeners();
   }
+
 
   void addRiderLocationMarker(LatLng riderPosition) {
     final riderMarker = Marker(
       markerId: MarkerId('riderMarker'),
       position: riderPosition,
       infoWindow: InfoWindow(title: "Rider Location"),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+    );
+
+    _markers.add(riderMarker);
+    notifyListeners(); // Update UI
+  }
+
+  void addRiderStartLocationMarker(LatLng riderPosition) {
+    final riderMarker = Marker(
+      markerId: MarkerId('riderMarker'),
+      position: riderPosition,
+      infoWindow: InfoWindow(title: "Rider Start Location"),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+    );
+
+    _markers.add(riderMarker);
+    notifyListeners(); // Update UI
+  }
+
+  void addRiderStopLocationMarker(LatLng riderPosition) {
+    final riderMarker = Marker(
+      markerId: MarkerId('riderMarker'),
+      position: riderPosition,
+      infoWindow: InfoWindow(title: "Rider Stop Location"),
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
     );
 
@@ -264,8 +333,8 @@ class LocationProvider with ChangeNotifier {
   }
 
   onCameraMove(CameraPosition position) {
-    // TODO implent something
-    //notifyListeners();
+    
+    notifyListeners();
   }
 
   // This method will fetch the address based on the rider's location

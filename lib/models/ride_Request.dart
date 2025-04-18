@@ -16,12 +16,14 @@ class RequestModelFirebase {
   static const USER_LNG = "user_longitude";
   static const DISTANCE_TEXT = "distance_text";
   static const DISTANCE_VALUE = "distance_value";
+  static const VEHICLE_TYPE = "type";
 
   late final String _id;
   late final String _username;
   late final String _userId;
   late final String _driverId;
   late final String _status;
+  late final String _type;
   late final Map<String, dynamic> _position;
   late final Map<String, dynamic> _destination;
   late final Map<String, dynamic> _distance;
@@ -36,6 +38,7 @@ class RequestModelFirebase {
   String get userId => _userId;
   String get driverId => _driverId;
   String get status => _status;
+  String get type => _type;
 
   Map<String, dynamic> get position => _position;
   Map<String, dynamic> get destination => _destination;
@@ -53,6 +56,7 @@ class RequestModelFirebase {
     _userId = data?[USER_ID] ?? '';
     _driverId = data?[DRIVER_ID] ?? '';
     _status = data?[STATUS] ?? '';
+    _type = data?[VEHICLE_TYPE] ?? '';
     _position = data?[POSITION] ?? {};
     _destination = data?[DESTINATION] ?? {};
     _distance = data?[DISTANCE] ?? {};
@@ -74,6 +78,7 @@ class RequestModelFirebase {
     _userId = data[USER_ID] ?? '';
     _driverId = data[DRIVER_ID] ?? '';
     _status = data[STATUS] ?? '';
+    _type = data[VEHICLE_TYPE] ?? '';
     _position = data[POSITION] ?? {};
     _destination = data[DESTINATION] ?? {};
     _distance = data[DISTANCE] ?? {};

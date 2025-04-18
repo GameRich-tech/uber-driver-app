@@ -1,15 +1,18 @@
+import 'package:Bucoride_Driver/helpers/constants.dart';
 import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
 import 'package:Bucoride_Driver/providers/user.dart';
-import 'package:Bucoride_Driver/screens/menu.dart';
+import 'package:Bucoride_Driver/screens/Paywall/Paywall.dart';
 import 'package:Bucoride_Driver/screens/terms_and_condition.dart';
 import 'package:Bucoride_Driver/utils/app_constants.dart';
 import 'package:Bucoride_Driver/utils/dimensions.dart';
 import 'package:Bucoride_Driver/widgets/app_bar/app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
-import '../utils/images.dart';
+import '../../providers/app_provider.dart';
+import '../../utils/images.dart';
 
 class AddVehiclePage extends StatefulWidget {
   @override
@@ -18,14 +21,6 @@ class AddVehiclePage extends StatefulWidget {
 
 class _AddVehiclePageState extends State<AddVehiclePage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController modelController = TextEditingController();
-  final TextEditingController brandController = TextEditingController();
-  final TextEditingController weightCapacityController =
-      TextEditingController();
-  final TextEditingController licensePlateController = TextEditingController();
-  final TextEditingController expiryDateController = TextEditingController();
-  final TextEditingController fuelTypeController = TextEditingController(text: "Petrol");
-
   bool _isLoading = false;
 
   Future<void> updateUserData(Map<String, dynamic> data) async {
@@ -34,25 +29,34 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
     _user.updateUserData(data);
     await _user.reloadUserModel();
     setState(() => _isLoading = false);
-    changeScreenReplacement(context, Menu());
+    changeScreenReplacement(
+        context,
+        Paywall(
+          isRenewal: false,
+        ));
   }
 
   Map<String, dynamic> gatherFormData() {
     UserProvider _user = Provider.of<UserProvider>(context, listen: false);
     return {
       'id': _user.userModel?.id,
-      'model': modelController.text,
-      'brand': brandController.text,
-      'weightCapacity': weightCapacityController.text,
-      'licensePlate': licensePlateController.text,
-      'expiryDate': expiryDateController.text,
-      'fuelType': fuelTypeController.text,
-      'hasVehicle': true, //
+      'vehicleType': _user.vehicleTypeController.text,
+      'model': _user.modelController.text,
+      'brand': _user.brandController.text,
+      'weightCapacity': _user.weightCapacityController.text,
+      'licensePlate': _user.licensePlateController.text,
+      'expiryDate': _user.expiryDateController.text,
+      'fuelType': _user.fuelTypeController.text,
+      'vehicleType': _user.vehicleTypeController.text,
+      'hasVehicle': false, //
     };
   }
 
   @override
   Widget build(BuildContext context) {
+    UserProvider _user = Provider.of<UserProvider>(context, listen: true);
+    AppStateProvider appState =
+        Provider.of<AppStateProvider>(context, listen: true);
     return Scaffold(
       appBar: CustomAppBar(
           title: "Add Vehicle", showNavBack: true, centerTitle: false),
@@ -76,47 +80,66 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
               SizedBox(
                 height: Dimensions.paddingSizeSmall,
               ),
-              _buildSubTitle("Add your info to send approval request to admin"),
+              _buildSubTitle(
+                  "Fill in your details to get approved by the admin."),
+              _buildSubTitle(
+                  "A small fee is required to complete registration."),
               SizedBox(height: Dimensions.paddingSizeLarge),
-              _buildTextField(
-                  "Vehicle Model", modelController, Icons.car_crash_outlined, isNumber: false),
-              _buildTextField("Brand", brandController, Icons.factory,isNumber: false),
-              _buildTextField(
-                  "Weight Capacity (KG)", weightCapacityController, Icons.scale,
-                  isNumber: true),
-              _buildTextField("License Plate", licensePlateController,
-                  Icons.confirmation_number,isNumber: false ),
-              
-              
-              _buildDatePickerField("License Issue", expiryDateController),
               _buildDropdownField(
-                "Fuel Type", fuelTypeController, Icons.heat_pump ,["Petrol", "Diesel", "Electric"],
+                "Vehicle Type",
+                _user.vehicleTypeController,
+                FaIcon(FontAwesomeIcons.gamepad),
+                {
+                  "Motorbike": FaIcon(FontAwesomeIcons.motorcycle),
+                  "Sedan": FaIcon(FontAwesomeIcons.car),
+                  "Van": FaIcon(FontAwesomeIcons.vanShuttle),
+                  "Tuk-Tuk": FaIcon(FontAwesomeIcons.car),
+                },
               ),
-               
-
-              
+              _buildTextField("Vehicle Model", _user.modelController,
+                  Icons.car_crash_outlined,
+                  isNumber: false),
+              _buildTextField("Brand", _user.brandController, Icons.factory,
+                  isNumber: false),
+              _buildTextField("Weight Capacity (KG)",
+                  _user.weightCapacityController, Icons.scale,
+                  isNumber: true),
+              _buildTextField("License Plate", _user.licensePlateController,
+                  Icons.confirmation_number,
+                  isNumber: false),
+              _buildDatePickerField(
+                  "License Issue", _user.expiryDateController),
+              _buildDropdownField(
+                "Fuel Type",
+                _user.fuelTypeController,
+                FaIcon(FontAwesomeIcons.gasPump),
+                {
+                  "Petrol": FaIcon(FontAwesomeIcons.gasPump),
+                  "Diesel": FaIcon(FontAwesomeIcons.gasPump),
+                  "Electric": FaIcon(FontAwesomeIcons.gasPump)
+                },
+              ),
               Center(
                 child: _isLoading
                     ? SpinKitFoldingCube(
                         color: AppConstants.lightPrimary, size: 50)
                     : ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             updateUserData(gatherFormData());
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    'Vehicle submitted successfully! Waiting for verification.'),
-                              ),
-                            );
+                            appState.showCustomSnackBar(
+                                context,
+                                "Vehicle submitted successfully! Waiting for verification. You will be redirected to pay Screen",
+                                Colors.green);
                           }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppConstants.lightPrimary,
                           padding: EdgeInsets.symmetric(
-                              horizontal: 40, vertical: 15),
+                              horizontal: 40, vertical: 12),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25)),
+                              borderRadius:
+                                  BorderRadius.circular(border_radius)),
                         ),
                         child: Text("Submit",
                             style: TextStyle(
@@ -169,51 +192,61 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
     );
   }
 
-Widget _buildDropdownField(String labelText, TextEditingController controller, IconData icon, List<String> items) {
-  return Padding(
-    padding: EdgeInsets.only(bottom: Dimensions.paddingSize),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          labelText,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: Dimensions.fontSizeDefault),
-        ),
-        SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade400),
-            color: Colors.white,
+  Widget _buildDropdownField(String labelText, TextEditingController controller,
+      FaIcon icon, Map<String, FaIcon> items) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: Dimensions.paddingSize),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            labelText,
+            style: TextStyle(fontSize: Dimensions.fontSizeSmall),
           ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: DropdownButtonFormField<String>(
-              value: controller.text,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                prefixIcon: Icon(icon, color: Colors.black54),
+          SizedBox(height: Dimensions.paddingSizeSmall),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(border_radius),
+              border: Border.all(color: Colors.grey.shade400),
+              color: Colors.white,
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              child: DropdownButtonFormField<String>(
+                value: items.keys.contains(controller.text)
+                    ? controller.text
+                    : null, // ✅ Fix
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                ),
+                dropdownColor: Colors.white,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    controller.text = newValue!;
+                  });
+                },
+                items: items.entries.map((entry) {
+                  return DropdownMenuItem<String>(
+                    value: entry.key,
+                    child: Row(
+                      children: [
+                        Icon(entry.value.icon,
+                            size: 20, color: Colors.black54), // ✅ Show icon
+                        SizedBox(width: 10),
+                        Text(entry.key,
+                            style:
+                                TextStyle(fontSize: Dimensions.fontSizeSmall)),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
-              dropdownColor: Colors.white,
-              onChanged: (String? newValue) {
-                setState(() {
-                  controller.text = newValue!;
-                });
-              },
-              items: items.map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value, style: TextStyle(fontSize: Dimensions.fontSizeDefault)),
-                );
-              }).toList(),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
+        ],
+      ),
+    );
+  }
 
   Widget _buildTextField(
       String label, TextEditingController controller, IconData icon,
@@ -221,12 +254,15 @@ Widget _buildDropdownField(String labelText, TextEditingController controller, I
     return Padding(
       padding: EdgeInsets.only(bottom: Dimensions.paddingSize),
       child: TextFormField(
+        style: TextStyle(fontSize: Dimensions.fontSizeSmall),
         controller: controller,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(fontSize: Dimensions.fontSizeSmall),
           prefixIcon: Icon(icon, color: Colors.black54),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(border_radius)),
           filled: true,
           fillColor: Colors.white,
         ),
@@ -244,7 +280,8 @@ Widget _buildDropdownField(String labelText, TextEditingController controller, I
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(Icons.calendar_today, color: Colors.black54),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(border_radius)),
           filled: true,
           fillColor: Colors.white,
         ),

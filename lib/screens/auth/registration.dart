@@ -175,8 +175,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                     child: IntlPhoneField(
                                       controller: authProvider
                                           .phone, // This holds only the local number
+                                          style: TextStyle(fontSize: Dimensions.fontSizeSmall),
                                       decoration: InputDecoration(
                                         labelText: "Phone",
+                                        labelStyle: TextStyle(fontSize: Dimensions.fontSizeSmall),
                                         filled: true,
                                         fillColor:
                                             Colors.white, // White background
@@ -270,7 +272,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                               },
                               child: Container(
                                 width: double.infinity,
-                                padding: EdgeInsets.symmetric(vertical: 15),
+                                padding: EdgeInsets.symmetric(vertical: 12),
                                 decoration: BoxDecoration(
                                   color: Colors.blueAccent,
                                   borderRadius: BorderRadius.circular(25),
@@ -280,7 +282,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                     "Register",
                                     style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: Dimensions.fontSizeLarge,
+                                        fontSize: Dimensions.fontSizeSmall,
                                         fontWeight: FontWeight.bold),
                                   ),
                                 ),
@@ -326,8 +328,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       padding: const EdgeInsets.all(Dimensions.paddingSizeSmall),
       child: TextFormField(
         controller: controller,
+        style: TextStyle(fontSize: Dimensions.fontSizeSmall),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(fontSize: Dimensions.fontSizeSmall),
           filled: true,
           fillColor: Colors.white, // White background
           border: OutlineInputBorder(
