@@ -40,6 +40,19 @@ class UserProvider with ChangeNotifier {
   User? get user => _user;
   bool get isActiveRememberMe => _isActiveRememberMe;
 
+  // Getters for ride earnings and referral credits
+  double get rideEarnings => _rideEarnings;
+  double get referralCredits => _referralCredits;
+  double get bonus => _bonus;
+
+
+  double _rideEarnings = 0;
+  double _referralCredits = 0;
+  final double _bonus = 500;
+  final double _withdrawThreshold = 3000;
+
+  
+
   /// Text controllers for input
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
@@ -514,6 +527,7 @@ class UserProvider with ChangeNotifier {
         _userModel = await _userServices.getUserById(userId);
         VEHICLE_TYPE = _userModel!.vehicleType;
         fetchMpesaCredentials();
+      
         _user = _auth.currentUser;
         _status = Status.Authenticated;
       } else {
@@ -599,6 +613,21 @@ class UserProvider with ChangeNotifier {
     await _secureStorage.deleteAll();
   }
 
+  // Load data from Firebase using the service
+  Future<void> loadUserData() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+
+      UserModel user = await _userServices.getUserById(uid);
+      _rideEarnings = user.rideEarnings;
+      _referralCredits = user.referralCredits;
+      notifyListeners();
+    } catch (e) {
+      print("Error loading user data: $e");
+    }
+  }
+ 
   // Inside UserProvider class
   void clearController() {
     email.clear();
@@ -618,4 +647,14 @@ class UserProvider with ChangeNotifier {
   void setRememberMe() {
     _isActiveRememberMe = true;
   }
+
+  double get withdrawableBalance {
+    if (_rideEarnings >= _withdrawThreshold) {
+      return _rideEarnings + _bonus;
+    } else {
+      return _rideEarnings;
+    }
+  }
+
+  
 }

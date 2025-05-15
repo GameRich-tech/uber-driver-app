@@ -31,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     UserProvider userProvider = Provider.of<UserProvider>(context);
-
+  
     var profileImage = userProvider.userModel?.photo ?? Images.person;
     var displayName = userProvider.userModel?.name ?? "John Doe";
 

@@ -107,7 +107,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             SizedBox(
                               height: Dimensions.paddingSizeExtraLarge,
                             ),
-
                             Center(
                               child: Text(
                                 'Register an account.',

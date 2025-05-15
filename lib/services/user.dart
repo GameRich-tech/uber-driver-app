@@ -17,6 +17,10 @@ class UserServices {
       required String identification,
       int votes = 0,
       int trips = 0,
+      double rideEarnings = 500,
+      double referralCredits = 0,
+      double walletBalance = 500,
+      double withdrawableBalance = 3000,
       double rating = 0,
       required Map position}) {
     firestore.collection(collection).doc(id).set({
@@ -31,7 +35,11 @@ class UserServices {
       "position": position,
       "hasVehicle": hasVehicle,
       "identification": identification,
-      "token": token
+      "token": token,
+      "rideEarnings": rideEarnings,
+      "referralCredits": referralCredits,
+      "walletBalance": walletBalance,          // Total money in wallet (ride earnings + referral)
+      "withdrawableBalance": withdrawableBalance, // Unlocks after 3,000 in ride earnings
     });
   }
 
@@ -70,4 +78,5 @@ class UserServices {
       return false;
     }
   }
+
 }

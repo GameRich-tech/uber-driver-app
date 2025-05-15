@@ -100,21 +100,25 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
   }
 
   void _route() async {
-    UserProvider auth = Provider.of<UserProvider>(context, listen: false);
-    AppStateProvider appState =
-        Provider.of<AppStateProvider>(context, listen: false);
+    await Future.delayed(Duration(seconds: 7)); // splash delay
 
-    await Future.delayed(Duration(seconds: 7)); // add delay for splash
+    if (!mounted) return;
+
+    UserProvider auth = Provider.of<UserProvider>(context, listen: false);
+    AppStateProvider appState = Provider.of<AppStateProvider>(context, listen: false);
+
     while (auth.status == Status.Authenticating) {
-      await Future.delayed(
-          Duration(milliseconds: 100)); // Wait for authentication
+      await Future.delayed(Duration(milliseconds: 100));
+      if (!mounted) return; // check again in case unmounted during loop
     }
+
+    if (!mounted) return;
+
     if (auth.status == Status.Authenticated) {
-      // Navigate to Home if authenticated
       changeScreenReplacement(context, Menu());
     } else {
-      // Navigate to Login if not authenticated
       firstLaunch = await appState.checkIfFirstLaunch();
+      if (!mounted) return;
 
       if (firstLaunch) {
         changeScreenReplacement(context, OnBoarding());
@@ -123,6 +127,7 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

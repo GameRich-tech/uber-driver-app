@@ -139,19 +139,19 @@ class _TripHistoryState extends State<TripHistory> {
                               height: 50,
                             ),
                             const Text(
-                              "You have not made any trips yet \n Once you do come back here to check",
+                              "You have not made any trips yet.",
                               style: TextStyle(
                                 fontFamily: AppConstants.fontFamily,
                                 fontSize: AppConstants.defaultTextSize,
                               ),
                             ),
-                            Text(
-                              "driverId=: $userId",
-                              style: TextStyle(
-                                fontFamily: AppConstants.fontFamily,
-                                fontSize: AppConstants.defaultTextSize,
-                              ),
-                            ),
+                            // Text(
+                            //   "driverId=: $userId",
+                            //   style: TextStyle(
+                            //     fontFamily: AppConstants.fontFamily,
+                            //     fontSize: AppConstants.defaultTextSize,
+                            //   ),
+                            // ),
                           ],
                         ),
                       );

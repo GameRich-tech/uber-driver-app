@@ -37,10 +37,19 @@ class CustomBottomNavBar extends StatelessWidget {
         ),
         CurvedNavigationBarItem(
           child: Icon(
-            Icons.chat_bubble_outline,
+            Icons.turn_sharp_right_rounded,
             color: Colors.white,
           ),
           label: 'Trips',
+        ),
+        CurvedNavigationBarItem(
+          child: Image.asset(
+            Images.walletMoney,
+            width: Dimensions.iconSizeLarge,
+            height: Dimensions.iconSizeLarge,
+            color: Colors.white,
+          ),
+          label: 'Wallet',
         ),
       ],
       onTap: (index) {
@@ -49,7 +58,4 @@ class CustomBottomNavBar extends StatelessWidget {
     );
   }
 }
-//IconButton(
-//icon: const Icon(Icons.home),
-//onPressed: () => onItemSelected(0), // Home
-//),
+

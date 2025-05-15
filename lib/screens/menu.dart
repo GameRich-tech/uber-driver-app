@@ -4,6 +4,7 @@ import 'package:Bucoride_Driver/screens/home.dart';
 import 'package:Bucoride_Driver/screens/parcels/parcel_trips.dart';
 import 'package:Bucoride_Driver/screens/trips/available_trips.dart';
 import 'package:Bucoride_Driver/screens/vehicle_registration/add_vehicle_page.dart';
+import 'package:Bucoride_Driver/screens/wallet/wallet.dart';
 import 'package:Bucoride_Driver/services/ride_request.dart';
 import 'package:Bucoride_Driver/utils/images.dart';
 import 'package:Bucoride_Driver/widgets/app_bar/app_bar.dart';
@@ -92,6 +93,7 @@ class _MenuState extends State<Menu> {
     MenuWidgetScreen(),
     TripScreen(),
     TripHistory(),
+    WalletPage(),
   ];
 
   // Method to handle bottom nav item taps

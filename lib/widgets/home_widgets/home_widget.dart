@@ -74,8 +74,11 @@ class _MenuWidgetScreenState extends State<MenuWidgetScreen> {
               ],
             ),
 
-            /// Online switch section
-            Row(
+            userProvider.userModel!.hasVehicle
+             ? SizedBox( width: 100.0,
+                  height: 35.0,)
+              :/// Online switch section
+              Row(
               children: [
                 FlutterSwitch(
                   width: 100.0,

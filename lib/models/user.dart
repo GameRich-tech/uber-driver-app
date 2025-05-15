@@ -16,7 +16,9 @@ class UserModel {
   static const LICENSE_PLATE = "licensePlate";
   static const HAS_VEHICLE = "hasVehicle";
   static const VEHICLE_TYPE = "vehicleType";
-  static const NEXT_PAYMENT_DATE = "nextPaymentDate"; // ✅ Add this field
+  static const NEXT_PAYMENT_DATE = "nextPaymentDate";
+  static const RIDE_EARNINGS = "rideEarnings";
+  static const REFERRAL_CREDITS = "referralCredits";
 
   late final String _id;
   late final String _name;
@@ -34,16 +36,15 @@ class UserModel {
   late final int _votes;
   late final int _trips;
   late final double _rating;
-  late final DateTime? _nextPaymentDate; // ✅ Store the payment date
+  late final double _rideEarnings;
+  late final double _referralCredits; 
+  late final DateTime? _nextPaymentDate; 
 
   // Getters
   String get name => _name;
   String get email => _email;
   String get id => _id;
   String get phone => _phone;
-  int get votes => _votes;
-  int get trips => _trips;
-  double get rating => _rating;
   String get token => _token;
   String get photo => _photo;
   String get brand => _brand;
@@ -51,9 +52,16 @@ class UserModel {
   String get vehicleType => _vehicleType;
   String get licensePlate => _licensePlate;
   String get fuelType => _fuelType;
+
+  int get votes => _votes;
+  int get trips => _trips;
+  double get rating => _rating;
+  double get rideEarnings => _rideEarnings;
+  double get referralCredits => _referralCredits;
+  
   bool get hasVehicle => _hasVehicle;
   DateTime? get nextPaymentDate => _nextPaymentDate; // ✅ Getter for the date
-
+  
   UserModel.fromSnapshot(DocumentSnapshot snapshot) {
     final data = snapshot.data() as Map<String, dynamic>?;
 
@@ -72,9 +80,9 @@ class UserModel {
     _votes = data?[VOTES] ?? 0;
     _trips = data?[TRIPS] ?? 0;
     _rating = (data?[RATING] ?? 0).toDouble();
+    _rideEarnings = (data?[RIDE_EARNINGS] ?? 0).toDouble();
+    _referralCredits = (data?[REFERRAL_CREDITS] ?? 0).toDouble(); // Initialize referral credits
 
-    // ✅ Convert Firestore timestamp to DateTime
-    // ✅ Convert Firestore timestamp or String to DateTime
     if (data?[NEXT_PAYMENT_DATE] != null) {
       if (data?[NEXT_PAYMENT_DATE] is Timestamp) {
         _nextPaymentDate = (data?[NEXT_PAYMENT_DATE] as Timestamp).toDate();

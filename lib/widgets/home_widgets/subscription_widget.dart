@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:Bucoride_Driver/utils/app_constants.dart';
@@ -61,6 +63,7 @@ class _SubscriptionWidgetState extends State<SubscriptionWidget>
       opacity: _fadeAnimation,
       child: Container(
         padding: EdgeInsets.all(16),
+        width: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),

@@ -4,7 +4,6 @@ import 'package:Bucoride_Driver/utils/dimensions.dart';
 import 'package:Bucoride_Driver/utils/images.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../providers/user.dart';
 import '../../screens/vehicle_registration/add_vehicle_page.dart';
 import '../loading.dart';
