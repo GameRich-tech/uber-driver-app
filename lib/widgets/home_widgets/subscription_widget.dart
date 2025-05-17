@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:Bucoride_Driver/helpers/screen_navigation.dart';
+import 'package:Bucoride_Driver/screens/Paywall/Paywall.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:Bucoride_Driver/utils/app_constants.dart';
@@ -27,6 +29,7 @@ class _SubscriptionWidgetState extends State<SubscriptionWidget>
     super.initState();
     _calculateDaysLeft();
 
+    
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 800),
@@ -40,6 +43,14 @@ class _SubscriptionWidgetState extends State<SubscriptionWidget>
     );
 
     _animationController.forward();
+
+    if (daysLeft <= 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        changeScreenReplacement(context, Paywall(isRenewal: true));
+      });
+      return;
+    }
+
   }
 
   void _calculateDaysLeft() {

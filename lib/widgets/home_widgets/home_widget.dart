@@ -74,7 +74,7 @@ class _MenuWidgetScreenState extends State<MenuWidgetScreen> {
               ],
             ),
 
-            userProvider.userModel!.hasVehicle
+            userProvider.userModel!.hasVehicle == false 
              ? SizedBox( width: 100.0,
                   height: 35.0,)
               :/// Online switch section
