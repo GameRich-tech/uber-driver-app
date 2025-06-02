@@ -36,7 +36,7 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file("D:/AndroidStudioProjects/uber-driver-app/bucoride.keystore")
+            storeFile file("/home/brocode/Documents/Coding/Flutter/uber-driver-app/bucoride.keystore")
             storePassword "gamerich2025"
             keyAlias "buco-driver-alias"
             keyPassword "gamerich2025"
