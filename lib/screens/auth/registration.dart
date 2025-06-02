@@ -125,12 +125,33 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             Center(
                               child: GestureDetector(
                                 onTap: () async {
-                                  final pickedFile = await ImagePicker()
-                                      .pickImage(source: ImageSource.gallery);
-                                  if (pickedFile != null) {
-                                    setState(() {
-                                      _profileImage = File(pickedFile.path);
-                                    });
+                                  var status = await Permission.storage.request(); // for Android 13+
+                                  if (status.isGranted) {
+                                    final pickedFile = await ImagePicker().pickImage(
+                                      source: ImageSource.gallery,
+                                      imageQuality: 70, // compress image
+                                      maxWidth: 1024,   // reduce memory usage
+                                    );
+                                    if (pickedFile != null) {
+                                      setState(() {
+                                        _profileImage = File(pickedFile.path);
+                                      });
+                                    }
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          "Gallery permission denied! \nPlease allow it in settings."
+                                          "\nPlease grant app permission to use access storage to upload profile picture"
+                                        ),
+                                        action: SnackBarAction(
+                                          label: 'Open Settings',
+                                          onPressed: () {
+                                            openAppSettings(); // from permission_handler
+                                          },
+                                        ),
+                                      )
+                                    );
                                   }
                                 },
                                 child: AnimatedContainer(
