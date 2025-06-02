@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../helpers/screen_navigation.dart';
@@ -124,12 +125,33 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             Center(
                               child: GestureDetector(
                                 onTap: () async {
-                                  final pickedFile = await ImagePicker()
-                                      .pickImage(source: ImageSource.gallery);
-                                  if (pickedFile != null) {
-                                    setState(() {
-                                      _profileImage = File(pickedFile.path);
-                                    });
+                                  var status = await Permission.storage.request(); // for Android 13+
+                                  if (status.isGranted) {
+                                    final pickedFile = await ImagePicker().pickImage(
+                                      source: ImageSource.gallery,
+                                      imageQuality: 70, // compress image
+                                      maxWidth: 1024,   // reduce memory usage
+                                    );
+                                    if (pickedFile != null) {
+                                      setState(() {
+                                        _profileImage = File(pickedFile.path);
+                                      });
+                                    }
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          "Gallery permission denied! \nPlease allow it in settings."
+                                          "\nPlease grant app permission to use access storage to upload profile picture"
+                                        ),
+                                        action: SnackBarAction(
+                                          label: 'Open Settings',
+                                          onPressed: () {
+                                            openAppSettings(); // from permission_handler
+                                          },
+                                        ),
+                                      )
+                                    );
                                   }
                                 },
                                 child: AnimatedContainer(
